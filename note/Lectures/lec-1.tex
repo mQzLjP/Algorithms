@@ -1,0 +1,114 @@
+\chapter{Linear Algebra Lemma}
+
+This chapter basically collect some linear algebra lemma that maybe helpful across the course.
+
+\begin{lemma}
+  Given \( A \) to be a matrix, who has the eigenvalues to be \( \lambda+1, \ldots, \lambda_p \), then the eigenvalues of the matrix \( A+c\Id \) where \( c \in \CC \) is \( \lambda_1 + c, \ldots, \lambda_p+c \).
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:nilpotent}
+  Let \( A \) be as above, the eigenvalues of \( A^l \) are \( \lambda_1^l, \ldots, \lambda_p^l \).
+\end{lemma}
+
+
+\chapter{Walks in Graph}
+
+\section{Graph Eigenvalues}
+
+To better phrasing a graph, we first need to define multiset so that we can express not only simple graph but also general graph in a mathematically rigourous way.
+
+\begin{definition}[\textbf{Multiset}]
+  A \underline{multiset} \( M \) on a set \( S \) is an unordered collection of elements in \( S \), s.t.
+  \begin{enumerate}
+    \item \( \forall \; x \in M, x \in S \).
+    \item The \( \# \) of times for \( x\in S \) to appear in \( M \), denoted as \( \mu_M(x) \), is \( \geq 0 \).
+  \end{enumerate}
+\end{definition}
+
+\begin{eg}
+  If \( \mu_M(x) = 0, 1 \; \forall x\), then \( M \) is a set.
+\end{eg}
+
+Note that two multiset \( M, M' \) are said to be equal if \( \forall x \in S, \mu_{M} (x) = \mu_{M'}(x)\).
+
+\begin{notation}
+  Let \( S \) be a finite set of size \( p \), then define:
+  \[
+    \binom{S}{k} = \{k-\text{subsets of } S\}
+  \] 
+
+  note that
+  \[
+    \abs{\binom{S}{k}} = \binom{\abs{S}}{k}
+  \] 
+
+  also define:
+  \[
+    \mchoo{S}{k} = \{k-\text{subsets of } S\}
+  \] 
+
+  note that:
+  \[
+    \abs{\mchoo{S}{k}} = \binom{p+k-1}{k}
+  \] 
+
+  this is the case: consider rephrasing the combinatorial problem as possible assigning of numbers for \( p \) numbers \( a_1, \ldots, a_p \) with \( a_1 + \ldots + a_p = k \) and \( a_i \in \br{0,k} \).
+\end{notation}
+
+Thus we can define the graph properly.
+
+\begin{definition}[\textbf{Graph}]
+  A \underline{finite graph} is a triple \( G=(V,E, \vp) \) with:
+  \begin{itemize}
+    \item \( V = \{v_1, \ldots, v_p\} \).
+    \item \( E = \{e_1, \ldots, e_q\} \).
+    \item \( \vp \) is a function \( E \to \mchoo{V}{2} \).
+  \end{itemize}
+
+  A finite simple graph is the same data with \( \vp: E \to \binom{V}{2} \)
+\end{definition}
+
+\begin{definition}[\textbf{Adjacency Matrix of Graph}]
+  The \underline{adjacency matrix} of a graph \( G \), denoted as \( A(G) \), whose entries is defined by:
+  \[
+    a_{ij} = \abs{\vp^{-1}(\{v_i, v_j\})}
+  \] 
+
+  In particular it counts the number of edges between two vertices \( v_i \) and \( v_j \). Note that it is well-defined since if there is no edges between \( v_i \) and \( v_j \), then the preimage of \( \vp \) will be \( \emptyset \), thus \( a_{ij}=0 \).
+\end{definition}
+
+\begin{definition}[\textbf{Walk}]
+  A \underline{walk} of length $k$ in a graph $G$ is a non-empty finite sequence of vertices and edges 
+  \[ 
+  W = v_0, e_1, v_1, e_2, v_2, \dots, e_k, v_k 
+  \]
+  such that for all $1 \le i \le k$, the edge $e_i$ has \textbf{endpoints} $v_{i-1}$ and $v_i$. 
+
+  In a simple graph, where the edges are determined by their endpoints, a walk can be simplified to a sequence of vertices:
+  \[ 
+  W = (v_0, v_1, \dots, v_k) \quad \text{where } \{v_{i-1}, v_i\} \in E(G)
+  \]
+\end{definition}
+
+\begin{note}
+  \leavevmode 
+  \begin{itemize}
+    \item In a walk, the both the edges and vertices can appear \textbf{repeatedly}.
+    \item If \( v_0 = v_k \), then such walk is called a \textbf{closed walk}.
+  \end{itemize}
+\end{note}
+
+\begin{proposition}
+  \label{prop:count-walk}
+  For any integer \( l \geq 1 \), the \( (i,j) \) entry of \( (A(G))^l \), denoted as \( a_{ij} \), is equal to the \( \# \) of walks of length \( l \) in \( G \) starting from \( v_i \) to \( v_j \).
+\end{proposition}
+
+\begin{theorem}
+  Let \( G \) be graph with \( A(G) \) possessing eigenvalues \( \lambda_1, \ldots, \lambda_p \), the \( \# \) \textbf{closed walks} of length \( l \) is:
+  \[
+    f_{G}(l) = \sum_{i=1}^p \lambda_i^l 
+  \] 
+\end{theorem}
+
+The proof is straightforward combining the \textbf{Proposition} \ref{prop:count-walk} and \textbf{Lemma} \ref{lem:nilpotent}.

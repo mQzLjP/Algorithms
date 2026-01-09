@@ -1,0 +1,38 @@
+\documentclass[a4paper]{report}
+\input{header.tex}
+\author{Yanzhi Li}
+\title{Math566: Combinatorial Theory}
+
+\thispagestyle{empty}
+\addbibresource{reference.bib}
+
+\usepackage{adjustbox}
+\usepackage{centernot}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  This is the note containning my personal thoughts as well as lecture notes, course content include some basic algebraic combinatorics. My course instructor is Prof. \href{https://www.shiyue.li}{Shiyue Li}.
+\end{abstract}
+
+\newpage
+
+\tableofcontents
+
+\input{Lectures/lec-1.tex}
+
+\newpage
+%─────Appendix────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+\appendix
+\appendixpage{}
+
+%\input{appendix.tex}
+
+\newpage
+%─────Reference──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+\pagestyle{plain}
+\printbibliography{}
+
+\end{document}

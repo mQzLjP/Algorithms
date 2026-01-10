@@ -13,3 +13,8 @@
 *.bcf-SAVE-ERROR
 *.synctex(busy)
 *.fls
+.*
+*
+!*.tex
+!*.bib
+!note/Figures/*

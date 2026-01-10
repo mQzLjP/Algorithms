@@ -1,0 +1,214 @@
+\chapter{Multiplicative Weight Update}
+
+To start with, we consider the following problem:
+
+\begin{question}
+
+  There're $n$ experts that give opinions: on day $i-1$ they each predict a binary outcome for day $i$. Then you consider the expert opinions and make your own prediction, hoping to make as less mistakes as possible.
+
+  \end{question}
+
+Here we list the parameters:
+
+  \begin{itemize}
+    \item $n$ - number of experts
+    \item $T$ - number of days
+    \item $M$ - number of mistakes made by the BEST expert
+    \item $m$ - number of mistakes you made
+  \end{itemize}
+
+
+\section{Warmup 1}
+
+Suppose now there's a perfect predictor, i.e. $M=0$. We can have the following strategy:
+
+\begin{algorithm}
+    \caption{Perfect Expert Algorithm}
+    \label{alg:perfect-expert}
+    Initialize $L = \{1, 2, \ldots, n\}$ (the set of all experts)\;
+    \For {day $i$ from $1$ to $T$}{
+      Predict according to the majority opinion among experts in $L$\;
+      Receive the true outcome for day $i$\;
+      Remove all experts in $L$ that made a mistake on day $i$\;
+    }
+\end{algorithm}
+
+On each mistake we make, at least half of the experts in $L$ are removed. Since there's a perfect expert, we know that after $m$ mistakes, there's still at least one expert left. Therefore, we have
+
+\[ 1\leq |L| \leq \frac{n}{2^m} \implies m \leq \log n. \]
+
+\section{Warmup 2}
+
+\begin{theorem}
+  For all cases:
+  \[ m\leq M(\log n + 1) + \log n. \]
+\end{theorem}
+
+\pagebreak
+
+We have the following algorithm:
+  \begin{algorithm}
+      \caption{Resetting Expert Algorithm}
+      \For {every day}{
+        Run Algorithm~\ref{alg:perfect-expert} until $|L| = 0$, then reset $L$\;
+      }
+    \end{algorithm}
+
+\begin{proof}
+  You make at most $\log n + 1$ mistakes before $|L| = 0$. At this point, every expert in the original set $L$ must have made at least one mistake. Since the best expert makes $M$ mistakes, the algorithm resets at most $M$ times. Therefore, the total number of mistakes is at most $M(\log n + 1) + \log n$.
+\end{proof}
+
+However, the result is still not very satisfying, since when $M$ is large, the bound becomes meaningless. Let's try a better approach that involve weights.
+
+\section{Multiplicative Weight Update (MWU) Philosophy}
+
+\begin{definition}
+MWU consists of 3 steps:
+\begin{enumerate}
+  \item Assign a \textbf{weight} (confidence level) to each expert.
+  \item When you receive new information, \textbf{update} the weights of experts.
+  \item Consider ALL expert opinions, but \textbf{proportional to their weights}.
+  \end{enumerate}
+\end{definition}
+\begin{remark}
+  The above two algorithms can be seen as special cases of MWU, in the sense that they assign weights of either $0$ or $1$ to each expert.
+\end{remark}
+
+\subsection{First Try: 1/2 Ratio}
+
+The idea is: everyone starts with weight 1. An expert's weight is \textit{halved} whenever it makes a mistake.
+
+\begin{algorithm}
+    \caption{Halving MWU Algorithm}
+    \label{alg:halving-weights}
+    Initialize weights $w_j = 1$ for all experts $j$\;
+    \For {day $i$ from $1$ to $T$}{
+      Predict according to the weighted majority opinion among all experts\;
+      Receive the true outcome for day $i$\;
+      \For {each expert $j$ that made a mistake on day $i$}{
+        Update weight: $w_j \gets w_j / 2$\;
+      }
+    }
+\end{algorithm}
+
+Now we denote $W_i$ to be the total weight of all experts after day $i$. Initially, we have $W_0 = n$.
+
+\begin{lemma}\label{thm:three-quarter}
+  After day $i$, if you made a mistake, then
+  \[ W_i \leq \frac{3}{4} W_{i-1}. \]
+\end{lemma}
+\begin{proof}
+  Suppose on day $i$, the total weight of experts predicting the wrong outcome is $X$. Since you made a mistake, we have $X \geq W_{i-1}/2$. After updating weights, the new total weight is
+  \[ W_i = W_{i-1} - \frac{X}{2} \leq W_{i-1} - \frac{W_{i-1}}{4} = \frac{3}{4} W_{i-1}. \]
+\end{proof}
+
+\begin{theorem}
+  \[ m \leq 2.41 (M + \log n) \]
+\end{theorem}
+\begin{proof}
+  We investigate the total weight after day $T$, $W_T$. According to Lemma~\ref{thm:three-quarter}, and the fact that $W_i \leq W_{i-1}$, we have $W_T \leq n (3/4)^m$.
+
+  On the other hand, the best expert makes $M$ mistakes, so its weight after day $T$ is at least $(1/2)^M$. 
+
+  Therefore, we have
+
+  \begin{align*}
+    &(1/2)^M \leq W_T \leq n (3/4)^m \\
+    \implies &(4/3)^m \leq n \cdot 2^M \\
+    \implies &m \leq \log_{4/3} (n \cdot 2^M) = \frac{\log n + M}{\log(4/3)} \approx 2.41 (M + \log n).
+  \end{align*}
+\end{proof}
+
+\subsection{Second Try: $1 - \epsilon$ Ratio}
+
+Maybe halving the weights is too aggressive. Let's try multiplying by (1-$\epsilon$) instead (assuming $\epsilon \in (0, 1/2)$, and optimze for $\epsilon$ later on.
+
+\begin{algorithm}
+    \caption{Deterministic MWU Algorithm}
+    \label{alg:deterministic-weights}
+    Initialize weights $w_j = 1$ for all experts $j$\;
+    \For {day $i$ from $1$ to $T$}{
+      Predict according to the weighted majority opinion among all experts\;
+      Receive the true outcome for day $i$\;
+      \For {each expert $j$ that made a mistake on day $i$}{
+        Update weight: $w_j \gets w_j (1 - \epsilon)$\;
+      }
+    }
+\end{algorithm}
+
+Following the same reasoning as we saw for Algorithm~\ref{alg:halving-weights}, we have the following lemma:
+
+\begin{lemma}\label{thm:one-minus-eps}
+  After day $i$, if you made a mistake, then
+  \[ W_i \leq \left(1 - \frac{\epsilon}{2}\right) W_{i-1}. \]
+\end{lemma}
+Proof is ommitted since it's similar to that of Lemma~\ref{thm:three-quarter}.
+
+\begin{theorem}
+  \[ m \leq 2(1+\epsilon) M + \frac{2 \ln n}{\epsilon}. \]
+  \end{theorem}
+
+\begin{proof}
+  Similar to before, we have
+  \[ (1 - \epsilon)^M \leq W_T \leq n \left(1 - \frac{\epsilon}{2}\right)^m. \]
+  According to Taylor expansion, we have
+  \[ \left\{ \begin{aligned}
+    &1+x \leq e^x,\\
+    &e^{-(x+x^2)}\leq 1 - x.
+    \end{aligned} \right. \]
+    So
+    \[ e^{-(\epsilon + \epsilon^2) M} \leq (1-\epsilon)^M \leq n \left(1 - \frac{\epsilon}{2}\right)^m \leq n e^{-\epsilon m/2}. \]
+    Taking natural logarithm on both sides, we have
+    \[ -(\epsilon + \epsilon^2) M \leq \ln n - \frac{\epsilon m}{2} \implies m \leq 2(1+\epsilon) M + \frac{2 \ln n}{\epsilon}\]
+\end{proof}
+
+\begin{remark}
+  For small enough $\epsilon$ and large enough $M$, we make approximately $2M$ mistakes.
+\end{remark}
+
+\begin{theorem} \label{thm:deterministic-lower-bound}
+  If the prediction algorithm is \textbf{deterministic}, then $m<2M$ is impossible.
+\end{theorem}
+
+\begin{proof}
+  Assume I have a strategy that guarantees $m < 2M$. As this strategy is deterministic, the 'Nature' can always know my prediction beforehand, and give me the opposite outcome. Therefore, on each day I make a mistake, and so $m = T$.
+  Now suppose there're 2 experts, one always predicts 0, and the other always predicts 1. Then at least one of them makes at most $T/2$ mistakes, i.e. $M \leq T/2 = m/2$, contradicting the assumption that $m < 2M$.
+\end{proof}
+
+\subsection{Final Try: Randomized MWU}
+
+From Theorem~\ref{thm:deterministic-lower-bound}, we see that a deterministic prediction is \textit{public} prediction, which can be contradicted by nature. To avoid this, we can \textbf{randomize} our prediction according to the weights.
+
+\begin{algorithm}
+    \caption{Randomized MWU Algorithm}
+    \label{alg:randomized-weights}
+    Initialize weights $w_j = 1$ for all experts $j$\;
+    \For {day $i$ from $1$ to $T$}{
+      $Wx \gets$ total weight of experts predicting outcome $x\in\{0,1\}$\;
+      Predict 0 with prob. $\frac{W0}{W0 + W1}$, and 1 with prob. $\frac{W1}{W0 + W1}$\;
+      Receive the true outcome for day $i$\;
+      \For {each expert $j$ that made a mistake on day $i$}{
+        Update weight: $w_j \gets w_j (1 - \epsilon)$\;
+      }
+    }
+\end{algorithm}
+
+\begin{theorem}
+  The expected number of mistakes made by Algorithm~\ref{alg:randomized-weights} is
+  \[ \mathbb{E}[m] \leq (1+\epsilon) M + \frac{\ln n}{\epsilon}. \]
+\end{theorem}
+
+\begin{proof}
+  Define $F_i$ to be the fraction of total weight on experts that made a mistake on day $i$.
+
+  Then we observe that:
+  \begin{enumerate}
+    \item $\Pr[\text{mistake on day } i] = F_i$.
+    \item $W_i = W_{i-1} (1 - \epsilon F_i)$.
+    \item $W_T = W_0 \prod_{i=1}^T (1 - \epsilon F_i) < n e^{-\epsilon \sum_{i=1}^T F_i}$.
+    \item $W_T \geq (1 - \epsilon)^M \geq e^{-(\epsilon + \epsilon^2) M}$.
+  \end{enumerate}
+  Combining (3) and (4), we have
+  \[ e^{-(\epsilon + \epsilon^2) M} \leq n e^{-\epsilon \sum_{i=1}^T F_i} \implies \sum_{i=1}^T F_i \leq (1+\epsilon) M + \frac{\ln n}{\epsilon}. \]
+  As $\E[m] = \sum_{i=1}^T \Pr[\text{mistake on day } i] = \sum_{i=1}^T F_i$, we complete the proof.
+\end{proof}

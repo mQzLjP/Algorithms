@@ -15,6 +15,7 @@
 *.fls
 .*
 *
-!*.tex
-!*.bib
+!note/*.tex
+!note/*.bib
+!note/Lectures/*.tex
 !note/Figures/*

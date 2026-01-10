@@ -13,9 +13,12 @@
 *.bcf-SAVE-ERROR
 *.synctex(busy)
 *.fls
-.*
+
 *
-!note/*.tex
+.*
+!note/
+!note/**/*.tex
 !note/*.bib
-!note/Lectures/*.tex
+!note/*.sty
 !note/Figures/*
+!.gitignore

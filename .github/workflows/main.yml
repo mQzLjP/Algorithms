@@ -9,4 +9,5 @@ jobs:
       - name: Compile LaTeX document
         uses: dante-ev/latex-action@latest
         with:
-          root_file: note/main.tex
+          root_file: main.tex
+          working_directory: note/

@@ -11,3 +11,9 @@ jobs:
         with:
           root_file: main.tex
           working_directory: note/
+      - name: Upload PDF file
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDFs
+          path: note/main.pdf
+      - uses: stefanzweifel/git-auto-commit-action@v7

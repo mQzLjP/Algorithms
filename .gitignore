@@ -19,6 +19,7 @@
 !note/
 !note/**/*.tex
 !note/*.bib
+!note/*.pdf
 !note/*.sty
 !note/Figures/*
 !.gitignore

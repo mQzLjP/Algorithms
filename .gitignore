@@ -9,3 +9,6 @@
 !note/src/*.sty
 !note/src/figures/*
 !.gitignore
+!slides/CSE586/*.pdf
+!slides/EECS477/*.pdf
+

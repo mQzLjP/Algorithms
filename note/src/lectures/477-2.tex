@@ -108,15 +108,15 @@ Let's try 2 possible values for $k$: $k = B/2$ and $k = B$.
 
 \begin{itemize}
   \item If we choose $k = B/2$:
-    \[ \text{ratio} = \frac{\ALG}{\OPT} = \begin{cases}
+    \[ \text{ratio} = \max\frac{\ALG}{\OPT} = \max\begin{cases}
       \frac{T}{T} = 1 & \text{if } T < B/2 \\
-      \frac{B/2 - 1 + B}{T} = \frac{3B/2 - 1}{T} \leq \frac{3B/2 - 1}{B/2} = 3 - \frac{2}{B} & \text{if } B/2 \leq T < B \\
+      \max\frac{B/2 - 1 + B}{T} = \max\frac{3B/2 - 1}{T} = \frac{3B/2 - 1}{B/2} = 3 - \frac{2}{B} & \text{if } B/2 \leq T < B \\
       \frac{B/2 - 1 + B}{B} = \frac{3}{2} - \frac{1}{B} & \text{if } T \geq B
     \end{cases} \]
     Therefore, the competitive ratio is at most $3 - \frac{2}{B}$.
 
   \item If we choose $k = B$:
-    \[ \text{ratio} = \frac{\ALG}{\OPT} = \begin{cases}
+    \[ \text{ratio} = \max\frac{\ALG}{\OPT} = \max\begin{cases}
       \frac{T}{T} = 1 & \text{if } T < B \\
       \frac{B - 1 + B}{B} = 2 - \frac{1}{B} & \text{if } T \geq B
     \end{cases} \]
@@ -130,11 +130,11 @@ Let's try 2 possible values for $k$: $k = B/2$ and $k = B$.
 \begin{proof}
 One can easily verify this by analyzing $\ALG(\epsilon B)$ for all $\epsilon$. 
 
-Note that the adversary can always choose $T$ to be $\epsilon B$.
+Note that the adversary can always choose $T$ to be $\epsilon B$ (it turns out that such naive choice is sufficient for this proof.)
 
 In such case, we have:
 
-\[ \text{ratio} = \frac{\ALG}{\OPT} = \frac{\epsilon B - 1 + B}{\min(\epsilon B, B)} = \begin{cases}
+\[ \text{ratio} = \max\frac{\ALG}{\OPT} = \frac{\epsilon B - 1 + B}{\min(\epsilon B, B)} = \begin{cases}
   \frac{\epsilon B - 1 + B}{\epsilon B} = 1 + \frac{B - 1}{\epsilon B} > 1 + \frac{B - 1}{B} = 2 - \frac{1}{B}  & \text{if } \epsilon < 1 \\
   \frac{\epsilon B - 1 + B}{B} = \epsilon + 1 - \frac{1}{B} \geq 2 - \frac{1}{B}  & \text{if } \epsilon \geq 1
   \end{cases} \]
@@ -144,8 +144,8 @@ If we have an adversary that can choose $T$ after seeing our deterministic algor
 
 \section{Randomized Competitive Analysis}
 
-\begin{definition}[Randomized Competitive Ratio]
-  The randomized competitive ratio is $c$, if the expected cost incurred by the online randomized algorithm is at most $c$ times the cost incurred by the optimal offline algorithm, i.e. $\frac{\mathbb{E}[\ALG]}{\OPT} \leq c$.
+\begin{definition}[Expected Competitive Ratio]
+  The expected competitive ratio is $c$, if the expected cost incurred by the online \textbf{randomized} algorithm is at most $c$ times the cost incurred by the optimal offline algorithm, i.e. $\frac{\mathbb{E}[\ALG]}{\OPT} \leq c$.
 
   Specifically, the adversary can choose the worst-case input after seeing the distribution of the randomized algorithm, but before seeing the random choices made by the algorithm.
 \end{definition}
@@ -153,7 +153,7 @@ If we have an adversary that can choose $T$ after seeing our deterministic algor
 \begin{eg}
   We call $\ALG(B/2)$ with probability $p$ and $\ALG(B)$ with probability $1-p$. Following the calculation above:
 
-  \[ \text{ratio} = \frac{\mathbb{E}[\ALG]}{\OPT} = \begin{cases}
+  \[ \text{expected ratio} = \frac{\mathbb{E}[\ALG]}{\OPT} = \begin{cases}
     1 & \text{if } T < B/2 \\
     p(3 - \frac{2}{B}) + (1-p) \cdot \frac{T}{T} = 1 + p(2 - \frac{2}{B}) & \text{if } B/2 \leq T < B \\
     p(\frac{3}{2} - \frac{1}{B}) + (1-p)(2 - \frac{1}{B}) = 2 - \frac{1}{B} - \frac{p}{2} & \text{if } T \geq B

@@ -123,7 +123,7 @@ Now we denote $W_i$ to be the total weight of all experts after day $i$. Initial
 
 Maybe halving the weights is too aggressive. Let's try multiplying by (1-$\epsilon$) instead (assuming $\epsilon \in (0, 1/2)$, and optimze for $\epsilon$ later on.
 
-\begin{algorithm}
+\begin{algorithm}[H]
     \caption{Deterministic MWU Algorithm}
     \label{alg:deterministic-weights}
     Initialize weights $w_j = 1$ for all experts $j$\;
@@ -179,7 +179,7 @@ Proof is ommitted since it's similar to that of Lemma~\ref{thm:three-quarter}.
 
 From Theorem~\ref{thm:deterministic-lower-bound}, we see that a deterministic prediction is \textit{public} prediction, which can be contradicted by nature. To avoid this, we can \textbf{randomize} our prediction according to the weights.
 
-\begin{algorithm}
+\begin{algorithm}[H]
     \caption{Randomized MWU Algorithm}
     \label{alg:randomized-weights}
     Initialize weights $w_j = 1$ for all experts $j$\;

@@ -1,4 +1,4 @@
-\section{Maximal Matching}
+\chapter{Maximal Matching}
 
 \begin{definition}[Matching and Maximal Matching]
     A \textbf{matching} in a graph \( G = (V, E) \) is a set of edges \( M \subseteq E \) such that no two edges in \( M \) share a common vertex.
@@ -66,7 +66,7 @@ With these lemmas, we have:
   The Maximal Matching Problem can be solved in $(\log^*n+O(1))\cdot \Delta$ rounds in the LOCAL model.
 \end{theorem}
 
-\section{$(\Delta + 1)$-Coloring}
+\chapter{$(\Delta + 1)$-Coloring}
 
 \begin{question}[$(\Delta + 1)$-Coloring Problem]
   Given a graph \( G = (V, E) \), assign a color \( \phi(v) \in [\Delta + 1] \) to each vertex \( v \in V \) such that $(u,v) \in E\implies\phi(u) \neq \phi(v)$.
@@ -76,7 +76,7 @@ With these lemmas, we have:
 
 Current deterministic algorithms are not very efficient. Therefore, we only focus on the randomized algorithm here.
 
-As Section~\ref{sec:ring-coloring} suggests, randomly 3-color a ring takes $O(\log n)$ rounds, so it will be ideal if the algorithm for $(\Delta + 1)$-Coloring can also run in $O(\log n)$ rounds.
+As Chapter~\ref{chap:ring-coloring} suggests, randomly 3-color a ring takes $O(\log n)$ rounds, so it will be ideal if the algorithm for $(\Delta + 1)$-Coloring can also run in $O(\log n)$ rounds.
 
 \begin{remark} \label{rem:rand-algo-logn-iterations}
   For a randomized algorithm, it can run in $O(\log n)$ iterations if every iteration runs in constant time, and the success probability of each iteration is at least a constant $\alpha$.

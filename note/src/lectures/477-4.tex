@@ -1,4 +1,4 @@
-\chapter{Symmetric Breaking Problems}
+\chapter{Ring Coloring} \label{chap:ring-coloring}
 
 \begin{definition}[Distributed Computing]
   A distributed computing system consists of multiple processors (or nodes) that communicate and coordinate their actions by passing messages to achieve a common goal.
@@ -6,7 +6,7 @@
   The main metric for a distributed algorithm is the number of communication rounds required to complete a task.
 \end{definition}
 
-The symmetric breaking problems are fundamental problems in distributed computing where nodes in a network must make decisions that break symmetry among themselves (it's bad if every node makes the same decision.) These problems are crucial for enabling coordination and cooperation in distributed systems.
+The symmetry breaking problems are fundamental problems in distributed computing where nodes in a network must make decisions that break symmetry among themselves (it's bad if every node makes the same decision.) These problems are crucial for enabling coordination and cooperation in distributed systems.
 
 For now, we will focus on the LOCAL model of distributed computing.
 
@@ -21,7 +21,6 @@ For now, we will focus on the LOCAL model of distributed computing.
     Each round, each node can send each neighbor a message (that's why it's called LOCAL.) There's no restriction on message size or local computation time.
 \end{definition}
 
-\section{Ring Coloring} \label{sec:ring-coloring}
 
 \begin{question}[3-coloring a Ring]
   Given a oriented $n$-cycle, assign one of three colors $\{0,1,2\}$ to each node such that no two adjacent nodes share the same color.
@@ -31,7 +30,7 @@ For now, we will focus on the LOCAL model of distributed computing.
   We won't pay much attention to 2-coloring even when $n$ is even, because one can prove it takes $\Omega(n)$ rounds in the LOCAL model (see homework.)
 \end{remark}
 
-\subsection{Randomized Approach}
+\section{Randomized Approach}
 
 Suppose the nodes can generate random bits. We can use the following randomized algorithm for any vertex:
 
@@ -73,7 +72,7 @@ Suppose the nodes can generate random bits. We can use the following randomized 
 
 It breaks symmetry by using randomness, allowing nodes to make independent decisions. We'll come back to randomized coloring in later lectures.
 
-\subsection{Deterministic Approach}
+\section{Deterministic Approach}
 
 Obviously, if the color pallet is as large as the number of vertices, we can easily color the ring in 1 round by assigning each node its unique ID as its color.
 

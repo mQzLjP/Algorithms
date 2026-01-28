@@ -21,7 +21,7 @@ For now, we will focus on the LOCAL model of distributed computing.
     Each round, each node can send each neighbor a message (that's why it's called LOCAL.) There's no restriction on message size or local computation time.
 \end{definition}
 
-\section{Graph Coloring}
+\section{Ring Coloring} \label{sec:ring-coloring}
 
 \begin{question}[3-coloring a Ring]
   Given a oriented $n$-cycle, assign one of three colors $\{0,1,2\}$ to each node such that no two adjacent nodes share the same color.
@@ -71,7 +71,7 @@ Suppose the nodes can generate random bits. We can use the following randomized 
   It means with high probability, all vertices succeed within $O(\log n)$ rounds.
 \end{proof}
 
-It breaks symmetry by using randomness, allowing nodes to make independent decisions.
+It breaks symmetry by using randomness, allowing nodes to make independent decisions. We'll come back to randomized coloring in later lectures.
 
 \subsection{Deterministic Approach}
 
@@ -120,7 +120,7 @@ When $n$ is 3 bits, the number of the new colors is still 3 bits, so such compre
       reassign the minimum color from $\{0,1,2\}$ that is different from my neighbors' colors\;
     }
   }
-  \caption{Deterministic 3-coloring Algorithm}
+  \caption{Deterministic 3-coloring Algorithm} \label{alg:det-3-coloring}
 \end{algorithm}
 
 To analyze the time complexity, we denote the function $f(k)$ as the number of new colors after one round with a color pallet of size $k$. We have:

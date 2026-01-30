@@ -122,7 +122,6 @@ Now let's look at the lower bound of the selection problem.
 \begin{tikzpicture}[
     node distance=0.2cm and 0.3cm,
     every node/.style={draw, rectangle, rounded corners, align=center, minimum width=2.5cm, minimum height=0.9cm, font=\small},
-    edge/.style={--, thick}
 ]
 
 % Nodes
@@ -133,10 +132,10 @@ Now let's look at the lower bound of the selection problem.
 \node (E) [below right=of C] {return $f$};
 
 % Edges
-\draw[edge] (A) -- (B);
-\draw[edge] (A) -- (C);
-\draw[edge] (C) -- (D);
-\draw[edge] (C) -- (E);
+\draw[--, thick] (A) -- (B);
+\draw[--, thick] (A) -- (C);
+\draw[--, thick] (C) -- (D);
+\draw[--, thick] (C) -- (E);
 
 \end{tikzpicture}
 

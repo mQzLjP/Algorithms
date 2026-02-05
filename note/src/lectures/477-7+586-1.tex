@@ -136,9 +136,27 @@ One may ask: \textbf{Can we reduce the number of subproblems to 2 instead?} If s
 	\end{aligned}
 \]
 
-which is exactly the FFT.
+That leads us to Fast Fourier Transform.
 
-\section{Fast Fourier Transfrom}
+\section{Fast Fourier Transform}
+
+\begin{remark}[Diversion] \label{rem:representation}
+	Sometimes the complexity of a problem depends on representation of input.
+\end{remark}
+
+For example, in the domain of:
+\begin{itemize}
+	\item \textbf{Positive Integers:}
+	      \begin{itemize}
+		      \item Representation by \textbf{binary}: Addition is easy (takes $O(n)$) time, but multiplication is tricky (takes $O(n^{1.58})$ time by Karatsuba's algorithm).
+		      \item Representation by \textbf{powers of primes}: Addition is tricky (possibly by converting back to binary representation), but multiplication is easy (just merge the prime factors together).
+	      \end{itemize}
+	\item \textbf{Complex Numbers:}
+	      \begin{itemize}
+		      \item Representation by \textbf{Cartesian Coordinates} \( a + bi \): Addition is easy (2 real additions), but multiplication is tricky (4 or 3 real multiplications).
+		      \item Representation by \textbf{Polar Coordinates} \( r(\cos \theta + i\sin \theta) \): Addition is tricky, but multiplication is easy (only takes 1 real multiplication and 1 real addition).
+	      \end{itemize}
+\end{itemize}
 
 \begin{definition}[\textbf{Representation of Polynomials}]
 	Given \( A \in \CC[X] \), one can represent it in two ways:
@@ -149,6 +167,12 @@ which is exactly the FFT.
 
 	where the second one is from the \textbf{Linear Algebra Insight} \ref{lem:interpolation}.
 \end{definition}
+
+To compare the two representations, we note that:
+\begin{itemize}
+	\item Coefficients representation is good for \textbf{addition} and \textbf{evaluation}.
+	\item Point-value representation is good for \textbf{addition} and \textbf{multiplication}, except that the product requires more evaluation points, but \textbf{evaluation} on points other than the given ones is hard.
+\end{itemize}
 
 The key point here is: \textbf{It is easier to multiply polynomials in the point-value representation}. What shall be the results?
 \begin{itemize}
@@ -182,3 +206,69 @@ One need to design a \textbf{special point set} \( \{p_0, \ldots, p_{2n-1}\} \),
 	\item we can evaluate \( \{A(p_i), B(p_i)\}_{i=0}^{2n-1} \) at all points \( p_i \) in time \( O(n\log n) \).
 	\item given \( \{C(p_i) = A(p_i) \cdot B(p_i)\}_{i=0}^{2n-1} \), we can compute the coefficients of \( C(x) \) in \( O(n\log n) \) time.
 \end{enumerate}
+
+In order to do so, we have to find a way to represent or calculate a polynomial in a Divide and Conquer way.
+
+\begin{lemma}
+	For $A(x) = \sum_{i=0}^{n-1} a_i x^i$, define:
+	\[ A_{\text{even}}(x) = \sum_{i=0}^{\frac{n}{2}-1} a_{2i} x^i, \quad A_{\text{odd}}(x) = \sum_{i=0}^{\frac{n}{2}-1} a_{2i+1} x^i \]
+	Then:
+	\[A(x) = A_{\text{even}}(x^2) + x A_{\text{odd}}(x^2)\]
+	\[ A(-x) = A_{\text{even}}(x^2) - x A_{\text{odd}}(x^2) \]
+\end{lemma}
+
+In this way, we can evaluate \( A(x) \) by evaluating \( A_{\text{even}}(x) \) and \( A_{\text{odd}}(x) \) at \( x^2 \), and doing so can make it easier to evaluate $A(-x)$ as well.
+
+This property won't help us much if we're evaluating on real numbers, as we will meet a dead end at negative numbers. However, if we evaluate on complex numbers, we can use \textbf{complex roots of unity} to our advantage.
+
+As mentioned above as an example of Remark~\ref{rem:representation}, complex numbers can be represented in two ways: Cartesian coordinates and Polar coordinates. The polar coordinates representation is particularly useful when dealing with multiplication, as multiplying two complex numbers in polar form simply involves multiplying their magnitudes and adding their angles. For roots of unity, we don't even multiply magnitudes since they are all 1!
+
+Consider $\omega_n = e^{2\pi i / n}$, which is a primitive $n$-th root of unity. The $n$ complex $n$-th roots of unity are given by:
+
+\[
+	\{ \omega_n^0, \omega_n^1, \omega_n^2, \ldots, \omega_n^{n-1} \}
+\]
+
+Let $n$ be a power of 2. Note that $\omega_n^{n/2} = e^{\pi i} = -1$, and $(\omega_n^k)^2 = (\omega_n^{n/2+k})^2 = \omega_{n/2}^k$. This means that when we square the $n$-th roots of unity, we get the $(n/2)$-th roots of unity.
+
+Therefore, we can write out the algorithm as follows:
+
+\begin{algorithm}[H]
+	\SetAlgoLined
+	\KwIn{Coefficients of polynomial \( A(x) \) of degree \( n-1 \), where \( n \) is a power of 2.}
+	\KwOut{Point-value representation of \( A(x) \) at \( n \)-th roots of unity.}
+	\If{\( n = 1 \)}{
+		\Return{\( \{(1, a_0)\} \)}\;
+	}
+	Compute \( A_{\text{even}}(x) \) and \( A_{\text{odd}}(x) \)\;
+	Recursively compute $\text{Even} \gets \text{FFT}(A_{\text{even}}, n/2)$ and $\text{Odd} \gets \text{FFT}(A_{\text{odd}}, n/2)$\;
+	Initialize an array \( Y \) of size \( n \)\;
+	\For{\( k = 0 \) \KwTo \( n/2 - 1 \)}{
+		Compute \( \omega_n^k = e^{2\pi i k / n} \)\;
+		$Y[k] \gets \text{Even}[k] + \omega_n^k \cdot \text{Odd}[k] $\;
+		$Y[k + n/2] \gets \text{Even}[k] - \omega_n^k \cdot \text{Odd}[k]$\;
+	}
+	\Return{\(Y\)}\;
+	\caption{Fast Fourier Transform (FFT)}
+\end{algorithm}
+
+In math terms, the FFT algorithm computes $Y=HA$, where $Y$ is the vector form of point-value representation of \( A(x) \) at \( n \)-th roots of unity, \( A \) is the vector form of coefficients of \( A(x) \), and \( H \) is the matrix defined by:
+
+\[ H = \begin{bNiceMatrix}
+		1      & 1                & 1                  & \cdots & 1                      \\
+		1      & \omega_n         & \omega_n^2         & \cdots & \omega_n^{n-1}         \\
+		1      & (\omega_n^2)     & (\omega_n^2)^2     & \cdots & (\omega_n^2)^{n-1}     \\
+		\vdots & \vdots           & \vdots             & \ddots & \vdots                 \\
+		1      & (\omega_n^{n-1}) & (\omega_n^{n-1})^2 & \cdots & (\omega_n^{n-1})^{n-1}
+	\end{bNiceMatrix} \]
+
+Computing $A$ back from $Y$ only requires computing $A = H^{-1}Y$.
+It can be shown that
+\[ H^{-1} = \frac{1}{n} \begin{bNiceMatrix}
+		1      & 1                   & 1                     & \cdots & 1                         \\
+		1      & \omega_n^{-1}       & \omega_n^{-2}         & \cdots & \omega_n^{-(n-1)}         \\
+		1      & (\omega_n^{-2})     & (\omega_n^{-2})^2     & \cdots & (\omega_n^{-2})^{n-1}     \\
+		\vdots & \vdots              & \vdots                & \ddots & \vdots                    \\
+		1      & (\omega_n^{-(n-1)}) & (\omega_n^{-(n-1)})^2 & \cdots & (\omega_n^{-(n-1)})^{n-1}
+	\end{bNiceMatrix} \]
+

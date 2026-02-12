@@ -1,0 +1,94 @@
+\chapter{Shortest Paths}
+
+\begin{definition}[Shortest Path and Shortest Distance]
+	Given a graph $G = (V, E)$, a length function $\ell: E \to \mathbb{R}$ and two vertices $s, t \in V$, the shortest path denoted as $P_{st}$ is a path from $s$ to $t$ with the minimum total length, i.e., $\ell(P_{st}) = \sum_{e \in P_{st}} \ell(e)$ is minimized.	The length of the shortest path is called the shortest distance, denoted as $\text{dist}(s, t)$.
+
+	Also we denote $n = |V|$ and $m = |E|$ as the number of vertices and edges in the graph, respectively.
+\end{definition}
+
+\begin{remark}
+	$P_{st}$ and $\text{dist}(s,t)$ might not be well-defined if there are negative weight cycles in the graph. In this case, one can keep going around the negative weight cycle to reduce the total length of the path indefinitely.
+
+	Here we assume that there are no negative weight cycles in the graph, so that $P_{st}$ and $\text{dist}(s,t)$ are well-defined.
+\end{remark}
+
+There're two versions of the shortest path problem: \textbf{Single Source Shortest Path (SSSP)} and \textbf{All Pairs Shortest Path (APSP)}. In SSSP, we want to find the shortest path from a source vertex to all other vertices. In APSP, we want to find the shortest path between every pair of vertices.
+
+One can prove that the $s$-$t$ shortest path (where both $s$ and $t$ are given) is at least as hard as SSSP (where only $s$ is given).
+
+\section{SSSP: Bellman-Ford Algorithm}
+
+\begin{question}
+	Given a graph $G = (V, E)$, a length function $\ell: E \to \mathbb{R}$ and a source vertex $s \in V$, how to find the shortest path from $s$ to all other vertices?
+\end{question}
+
+A naive recursive relation is $\text{dist}(s, t) = \min_{(u, t) \in E} (\text{dist}(s, u) + \ell(u, t))$ for $t \neq s$ and $\text{dist}(s, s) = 0$. However, this recursive relation is not quite correct as there exists some circular dependencies.
+
+Here we state some lemmas that will be useful for designing the algorithm.
+
+\begin{lemma}
+	\label{lemma:shortest-path-subpath}
+	Any subpath of a shortest path is also a shortest path.
+\end{lemma}
+
+\begin{corollary}
+	\label{corollary:shortest-path-simple}
+	There exists a shortest path that has at most $n-1$ edges if the graph is connected.
+\end{corollary}
+
+The above lemma and corollary suggest that we can find the shortest path by iteratively relaxing the edges. We can define $\text{dist}^{(i)}(s, t)$ as the length of the shortest path from $s$ to $t$ that has at most $i$ edges. Then we have the following recursive relation:
+
+\[ \text{dist}^{(i)}(s, t) = \min\left( \text{dist}^{(i-1)}(s, t), \min_{(u, t) \in E} (\text{dist}^{(i-1)}(s, u) + \ell(u, t)) \right) \]
+
+Therefore, we can compute $\text{dist}^{(i)}(s, t)$ for $i = 0, 1, \ldots, n-1$ and the final answer will be $\text{dist}^{(n-1)}(s, t)$. The time complexity of this algorithm is $O(nm)$, which is known as the Bellman-Ford algorithm.
+
+\section{APSP: Floyd-Warshall Algorithm}
+
+\begin{question}
+	Given a graph $G = (V, E)$ and a length function $\ell: E \to \mathbb{R}$, how to find the shortest path between every pair of vertices?
+\end{question}
+
+If we apply the Bellman-Ford algorithm for each vertex as the source, we can find the shortest path between every pair of vertices in $O(n^2 m) = O(n^4)$ time. However we can find a recursion that converges in a more aggressive way.
+
+Following the same notation of $\text{dist}^{(i)}(s, t)$ as the length of the shortest path from $s$ to $t$ that has at most $i$ edges, instead of increasing $i$ by 1, we can double $i$ in each iteration by iterating the midpoints of the paths (as we now have distances between any pairs). Specifically, we have the following recursive relation:
+
+\[ \text{dist}^{(2i)}(s, t) = \min_{u \in V} (\text{dist}^{(i)}(s, u) + \text{dist}^{(i)}(u, t)) \]
+
+That gives a time complexity of $O(n^3 \log n)$.
+
+In fact, we can do better with a different way of breaking circular dependencies. We can define $\text{dist}^{[k]}(s, t)$ as the length of the shortest path from $s$ to $t$ that only uses vertices in $\{v_1,v_2,\ldots,v_k\}$ as intermediate vertices. Then we have the following recursive relation:
+
+\[ \text{dist}^{[k]}(s, t) = \min\left( \text{dist}^{[k-1]}(s, t), \text{dist}^{[k-1]}(s, v_k) + \text{dist}^{[k-1]}(v_k, t) \right) \]
+
+This gives a time complexity of $O(n^3)$, which is known as the Floyd-Warshall algorithm.
+
+\section{Dijkstra's Algorithm}
+
+For Dijkstra's algorithm to work, we need to guarantee that there're no negative weight edges in the graph.
+
+\subsection{Getting Rid of Negative Weight Edges}
+
+Can we construct a graph $G'$ with weights $\ell': E \to \mathbb{R}$ such that $\ell'(e) \geq 0$ for all $e \in E$ and the shortest path in $G'$ is the same as the shortest path in $G$? We can!
+
+Consider a prize function $p: V \to \mathbb{R}$ and define $\ell_p(u, v) = \ell(u, v) + p(u) - p(v)$ for each edge $(u, v) \in E$. Then we have:
+
+\[ \ell_p(P_{st}) = \sum_{(u, v) \in P_{st}} \ell_p(u, v) = \sum_{(u, v) \in P_{st}} (\ell(u, v) + p(u) - p(v)) = \ell(P_{st}) + p(s) - p(t) \]
+
+For any path $P_{st}$ from $s$ to $t$, the offset $p(s) - p(t)$ is the same, so the shortest path in $G$ is also the shortest path in $G'$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

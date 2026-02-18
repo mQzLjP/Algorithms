@@ -62,9 +62,9 @@ In fact, we can do better with a different way of breaking circular dependencies
 
 This gives a time complexity of $O(n^3)$, which is known as the Floyd-Warshall algorithm.
 
-\section{Dijkstra's Algorithm}
+\section{APSP and SSSP+: Dijkstra's Algorithm and Fibonacci Heap}
 
-For Dijkstra's algorithm to work, we need to guarantee that there're no negative weight edges in the graph.
+For Dijkstra's algorithm to work, we need to guarantee that there're no negative weight edges in the graph, i.e. the weight function should now be $\ell: E \to \RR^+ \cup \{0\}$.
 
 \subsection{Getting Rid of Negative Weight Edges}
 
@@ -75,20 +75,3 @@ Consider a prize function $p: V \to \mathbb{R}$ and define $\ell_p(u, v) = \ell(
 \[ \ell_p(P_{st}) = \sum_{(u, v) \in P_{st}} \ell_p(u, v) = \sum_{(u, v) \in P_{st}} (\ell(u, v) + p(u) - p(v)) = \ell(P_{st}) + p(s) - p(t) \]
 
 For any path $P_{st}$ from $s$ to $t$, the offset $p(s) - p(t)$ is the same, so the shortest path in $G$ is also the shortest path in $G'$.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

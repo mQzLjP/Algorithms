@@ -1,0 +1,104 @@
+\chapter{Max Flow}
+
+\begin{definition}[Flow Network]
+	A \textbf{flow network} is a directed graph $G = (V, E, c)$ with two special vertices $s$ and $t$ called the \textbf{source} and \textbf{sink}, respectively. $c: E \to \mathbb{Z}^+$ is a function that assigns a non-negative integer capacity to each edge.
+\end{definition}
+
+\begin{definition}[Flow]
+	A \textbf{flow} in a flow network $G$ is a function $f: V\times V \to \mathbb{Z}$ that satisfies the following conditions:
+	\begin{itemize}
+		\item \textbf{Capacity constraint}: For every pair of vertices $(u, v) \in V\times V$, we have $f(u, v) \leq c(u, v)$ (let $c(u, v) = 0$ if $(u, v) \notin E$).
+		\item \textbf{Skew symmetry}: For every pair of vertices $(u, v) \in V\times V$, we have $f(u, v) = -f(v, u)$.
+		\item \textbf{Flow conservation}: For every vertex $u \in V\setminus\{s, t\}$, we have $\sum_{(u,x) \in E} f(u, x) = 0$. Here we implicitly assume for every edge, there's a reverse edge with capacity 0 (if it doesn't exist in the original graph).
+	\end{itemize}
+	$v(f) = \sum_{(s, x) \in E} f(s, x) = \sum_{(x, t) \in E} f(x, t)$ is called the \textbf{value} of the flow $f$.
+\end{definition}
+
+\section{Ford-Fulkerson Algorithm}
+
+We give a naive algorithm to find a maximum flow:
+
+\begin{enumerate}
+	\item Find a path from $s$ to $t$.
+	\item Push as much flow as possible along this path.
+	\item Find another path that has \textbf{free capacity}.
+	\item Push as much flow as possible along this path.
+	\item Repeat steps 3 and 4 until there is no path from $s$ to $t$ with free capacity.
+\end{enumerate}
+
+The \textbf{free capacity} here seems to be a bit vague, so we need to define it more formally, in a way that makes this algorithm work:
+
+\begin{definition}[Residual Network]
+	Given a flow network $G = (V, E, c)$ and a flow $f$, the \textbf{residual network} $G_f$ is defined as follows:
+	\begin{itemize}
+		\item $c_f(u,v)$ represents the amount of additional flow that could be sent through $(u,v)$ without violating the capacity constraint.
+		\item $c_f(u, v) = c(u, v) - f(u, v)$ for each edge $(u, v) \in E$.
+		\item Only edges with positive capacity appear in $G_f$.
+	\end{itemize}
+\end{definition}
+
+Now we can restate the algorithm as follows:
+
+\begin{algorithm}[H]
+	\caption{Ford-Fulkerson Algorithm}
+	$G_f \gets G$\;
+	Initialize $f$ to be the zero flow\;
+	\While{there is a path $P$ from $s$ to $t$ in $G_f$}
+	{
+		$f' \coloneqq $ maximum flow along $P$\;
+		$f \gets f + f'$\;
+	}
+	return $f$\;
+\end{algorithm}
+
+\begin{lemma}
+	$f'' = f + f'$ is a legal flow in $G$.
+\end{lemma}
+
+\begin{proof}
+	We need to verify the three conditions in the definition of flow:
+	\begin{itemize}
+		\item \textbf{Capacity constraint}: $f''(u,v) = f(u,v)+ f'(u,v)\le f(u,v) + c_f(u,v) = f(u,v) + (c(u,v) - f(u,v)) = c(u,v)$ for every pair of vertices $(u, v) \in V\times V$.
+		\item \textbf{Skew symmetry}: $f''(u, v) = -f''(v, u)$ because we maintain this property throughout the algorithm. When we push flow along a path, we update the flow in both directions accordingly.
+		\item \textbf{Flow conservation}: For every vertex $u \in V\setminus\{s, t\}$, we have $\sum_{(u,x) \in E} f''(u, x) = \sum_{(u,x) \in E} (f(u, x) + f'(u, x)) = \sum_{(u,x) \in E} f(u, x) + \sum_{(u,x) \in E} f'(u, x) = 0 + 0 = 0$.
+	\end{itemize}
+\end{proof}
+
+\section{Max Flow-Min Cut Theorem}
+
+To proof the correctness of the algorithm, we need to introduce the following definition:
+
+\begin{definition}[$s$-$t$ Cut]
+	$(A,B)$ is an \textbf{$s$-$t$ cut} if $A\cup B = V$, $A\cap B = \emptyset$, $s \in A$ and $t \in B$.
+
+	The capacity of the cut is defined as $c(A, B) = \sum_{(u, v) \in E, u \in A, v \in B} c(u, v)$. For any flow $f$, $v(f) \leq c(A, B)$.
+\end{definition}
+
+\begin{theorem}[Max Flow-Min Cut Theorem]
+	The following statements are equivalent:
+	\begin{itemize}
+		\item $f$ is a maximum flow in $G$.
+		\item There is no path from $s$ to $t$ in the residual network $G_f$.
+		\item There exists an $s$-$t$ cut $(A, B)$ such that $v(f) = c(A, B)$.
+	\end{itemize}
+\end{theorem}
+\begin{proof}
+	(1) $\Rightarrow$ (2): We prove the contrapositive. If there is a path from $s$ to $t$ in the residual network $G_f$, we can push more flow along this path, which contradicts the assumption that $f$ is a maximum flow.
+
+	(2) $\Rightarrow$ (3): Let $A = \{v \in V : v \text{ is reachable from } s \text{ in } G_f\}$ and $B = V\setminus A$. Then $(A, B)$ is an $s$-$t$ cut. Since there is no path from $s$ to $t$ in $G_f$, we have $t \in B$. For every edge $(u, v)$ with $u \in A$ and $v \in B$, we have $c_f(u, v) = 0$, which implies that $f(u, v) = c(u, v)$. Therefore, $v(f) = \sum_{(s, x) \in E} f(s, x) = \sum_{u\in A} \sum_{(u, x) \in E} f(u, x) =\sum_{(u, v) \in E, u \in A, v \in B} f(u, v) = \sum_{(u, v) \in E, u \in A, v \in B} c(u, v) = c(A, B)$.
+
+	(3) $\Rightarrow$ (1): For any flow $f'$, we have $v(f') \leq c(A, B) = v(f)$, which implies that $f$ is a maximum flow.
+\end{proof}
+
+The efficiency of the Ford-Fulkerson algorithm is $O(m \cdot v(f))$, as it takes $O(m)$ time to find a path, and augmenting the flow along the path can increase the flow value by at least 1. However, if the capacities are irrational numbers, the algorithm may not terminate.
+
+\section{Examples using Max Flow}
+
+\begin{question}[Max Matching in Bipartite Graph]
+	Given a bipartite graph $G = (V, E)$ with $V = L \cup R$, find the maximum matching in $G$.
+\end{question}
+
+One can use it to prove Hall's theorem:
+\begin{theorem}[Hall's Theorem]
+	If a bipartite graph $G = (L \cup R, E)$ does not have a perfect matching, then there exists a subset $S \subseteq V$ such that $|N(S)| < |S|$, where $N(S)$ is the set of neighbors of $S$ in $V$.
+\end{theorem}

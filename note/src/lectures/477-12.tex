@@ -92,6 +92,24 @@ To proof the correctness of the algorithm, we need to introduce the following de
 
 The efficiency of the Ford-Fulkerson algorithm is $O(m \cdot v(f))$, as it takes $O(m)$ time to find a path, and augmenting the flow along the path can increase the flow value by at least 1. However, if the capacities are irrational numbers, the algorithm may not terminate.
 
+To improve Ford-Fulkerson Algorithm, we can choose path greedily, so that the bottleneck edges are maximized.
+
+\begin{lemma}
+	Denote the next augmenting path as $p$, and let $\delta := v(f_{\max})-v(f)$ be the value of max flow in $G_f$. Then we have $v(f_p) \ge \delta/m$ if we maximize bottleneck edges.
+\end{lemma}
+\begin{proof}
+	Here we proof by contradiction. Assume that $v(f_p) < \delta/m$.
+
+	Then we can remove all edges with $c_f(e) < \delta/m$ from $G_f$, and expect $s$ and $t$ are unconnected.
+
+	The capacity of such cut is less than $m \cdot \delta/m = \delta \Rightarrow \contra$.
+\end{proof}
+
+Therefore, $v(f_p)\ge \delta/m = (v(f_{\max})-v(f))/m$.
+If we denote $\Delta_i := v(f_{\max})-v(f_i)$, where $f_i$ is the flow after the $i$-th iteration, we have $\Delta_{i+1} \leq \Delta_i - \frac{\Delta_i}{m} = \Delta_i (1 - \frac{1}{m})$. This implies that $\Delta_i \leq v(f_{\max})(1 - \frac{1}{m})^i < v(f_{\max}) e^{-i/m}$. To guarantee that $\Delta_i < 1$, $i = m \log v(f_{\max})$ suffices for integer-capacity graphs.
+
+It means that the number of iterations is at most $O(m \log v(f_{\max}))$, so the total time complexity is $O(m^2 \log v(f_{\max}))$.
+
 \section{Examples using Max Flow}
 
 \begin{question}[Max Matching in Bipartite Graph]

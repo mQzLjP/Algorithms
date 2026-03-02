@@ -1,0 +1,87 @@
+
+
+\section{Dinitz Algorithm}
+
+Dinitz (or Dinic) Algorithm can solve max flow in $O(n^2 m)$ time. Here we first list some definitions:
+
+\begin{definition}[Saturated Edge and Blocking Flow]
+	An edge $e$ is called \textbf{saturated} if $f(e) = c(e)$. $f$ is called a \textbf{blocking flow} if every $s$-$t$ path contains at least one saturated edge.
+\end{definition}
+
+We can then make use of it to design Dinitz Algorithm. The main idea is to find a blocking flow in the residual graph, and then update the flow by adding the blocking flow. We repeat this process until there is no augmenting path in the residual graph.
+
+\begin{algorithm}
+	$f\gets 0$\;
+	\While{there is an augmenting path in $G_f$}{
+		$G' = (V,E')$, with $E' \subseteq E(G_f)$ being the edges in shortest path (assuming all edges have length 1) from $s$ in $G_f$\;
+		$f' \gets$ a blocking flow in $G'$\;
+		Update $f\gets f+f'$\;
+	}
+	\Return{$f$}\;
+	\caption{Dinitz Algorithm}\label{alg:dinitz}
+\end{algorithm}
+
+\begin{lemma}
+	In every iteration of Dinitz Algorithm, the length of the shortest path from $s$ to $t$ in the residual graph increases by at least 1.
+\end{lemma}
+\begin{proof}
+	We can build layers based on the distance from $s$ in the residual graph. Then $G'$ is the subgraph after removing all edges that don't go from a lower layer to a higher layer (also note that all edges can only connect two neighboring layers). Since $f'$ is a blocking flow, there is no path that traverses all layers exactly once (i.e. $L_0 \to L_1 \to \cdots \to L_d$) in $G_{f+f'}$.
+
+	As any newly created edges only go backwards, all paths will be strictly longer. This proves the lemma.
+\end{proof}
+
+Then we give an algorithm for computing blocking flows.
+
+\begin{algorithm}
+	\While{there is an $s$-$t$ path in $G'$}{
+		Apply DFS to find an $s$-$t$ path $p$ in $G'$\;
+		Delete edges during backtracking, as they can't connect to $t$\;
+		Push flow along $p$ by the bottleneck edge, and delete all saturated edges\;
+	}
+	\Return the flow\;
+	\caption{Blocking Flow Algorithm}\label{alg:blocking}
+\end{algorithm}
+
+\begin{lemma}
+	The blocking flow algorithm runs in $O(nm)$ time. If $\forall e\in E, c(e) =1$, then it runs in $O(m)$ time.
+\end{lemma}
+\begin{proof}
+	Every iteration, we delete at least one edge, so there are at most $O(m)$ iterations. Each iteration takes $O(n)$ time to find a path and update the flow.
+
+	If all edges have capacity 1, then each edge can only be saturated once, so the total time is $O(m)$.
+\end{proof}
+
+\begin{theorem}
+	The Dinitz Algorithm runs in $O(n^2 m)$ time. If $c(s,u)$ and $c(v,t)$ are arbitrary, but all other edges have capacity 1, then it runs in $O(\min\{m^{3/2}, n^{2/3} m\})$ time.
+\end{theorem}
+\begin{proof}
+	\begin{itemize}
+		\item	As the distance from $s$ to $t$ increases by at least 1 in each iteration, there are at most $n-1$ iterations. Each iteration takes $O(nm)$ time, so the total time is $O(n^2 m)$.
+
+		\item For the $m^{3/2}$ bound, we see that after $\sqrt{m}$ iterations, the distance from $s$ to $t$ is at least $\sqrt{m}+1$ and we have at least $\sqrt{m}+2$ layers, if we consider $s$ and $t$ as layers $L_0$ and $L_{\sqrt{m}+1}$ respectively.
+
+		      We can find a cut between neighboring layers, so there are at least $\sqrt{m}$ cuts, where any edge can cross at most 1 cut. As the total capacity of all edges is $m$, we can guarantee that there is a cut with capacity at most $\sqrt{m}$. This means that the min cut of this graph (equivalently, max flow) is at most $\sqrt{m}$, so the total time is $O(m^{3/2})$ as we only need to iterate $\sqrt{m}$ times more.
+
+		\item For the $n^{2/3} m$ bound, we see that after $3n^{2/3}$ iterations, the distance from $s$ to $t$ is at least $3n^{2/3}+1$ and we have at least $3n^{2/3}+2$ layers.
+
+		      Then we see the average size of layers have size smaller than $n^{1/3}/3$, so at most $1/3$ of the layers have size greater than $n^{1/3}$ according to Markov's Inequality.
+
+		      From Pigeonhole Principle, there are at least a pair of two neighboring layers with size smaller than $n^{1/3}$, so the cut between them has capacity at most $n^{2/3}$. This means that the min cut of this graph is at most $n^{2/3}$, and the rest follows similarly to the previous case.
+	\end{itemize}
+\end{proof}
+\begin{remark}
+	The $O(m^{3/2})$ bound can hold even when the graph is not simple, i.e. there can be multiple (a.k.a. parallel) edges between two vertices, but the $O(n^{2/3} m)$ bound won't hold there.
+\end{remark}
+
+\begin{theorem}
+	A max matching in a bipartite graph can be found in $O(m\sqrt{n})$ time.
+\end{theorem}
+\begin{proof}
+	We give direction to the edges, so that all edges are directed from $L$ to $R$. Then we can add two vertices $s$ and $t$,	adding $s$ connecting to all vertices in $L$, and $t$ connected by all vertices in $L$, with all edges having capacity 1. Then we can apply Dinitz Algorithm to find the max flow.
+
+	After $2\sqrt{n}$ iterations, we have at least $2\sqrt{n}+2$ layers.
+
+	Note that most of the edges are pointing from an odd layer to an even layer: the edges pointing from even layers to odd ones are `newly created' after pushing some flows and generating edges in the opposite direction, so they are indicating edges that are already matched.
+
+	As the number of matched edges is at most $n$, the total number of `reverse' edges is at most $n$ as well. The number of cuts that cut from even layers to odd layers are $\sqrt{n}$, so there is a cut with capacity at most $n/\sqrt{n} = \sqrt{n}$. This means that the max flow is at most $\sqrt{n}$, so we only need to iterate $\sqrt{n}$ times more, which gives us the total time of $O(m\sqrt{n})$.
+\end{proof}

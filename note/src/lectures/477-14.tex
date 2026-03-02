@@ -1,0 +1,192 @@
+\chapter {Linear Programming and Duality}
+
+\section {Linear Programming}
+
+\begin{question}
+	Nuvole is making and selling scones and muffins. A dozen of scones costs 5 bags of flour, 2 eggs, and 1 cup of sugar, and a dozen of muffins costs 4 bags of flour, 4 eggs, and 2 cups of sugar. Nuvole has 50 bags of flour, 30 eggs, and 20 cups of sugar. He sells a dozen of scones for \$10 and a dozen of muffins for \$12. How many dozens of scones and muffins should he make to maximize his profit?
+\end{question}
+
+The math model for this problem is as follows:
+
+Maximize $10x + 12y$ subject to
+
+\begin{align*}
+	5x + 4y & \leq 50 \\
+	2x + 4y & \leq 30 \\
+	x + 2y  & \leq 20 \\
+	x, y    & \geq 0
+\end{align*}
+
+To solve this, we can draw the constraints on the $xy$-plane and find the feasible region. The optimal solution will be at one of the vertices of the feasible region. We can calculate the profit at each vertex and choose the one that gives the maximum profit. It's tedious to draw such graphs by $\LaTeX$, so the graph is omitted here (this is not the main point anyway).
+
+\begin{definition}[Linear Programming]
+	A \textbf{linear programming} problem is a language of the form:
+
+	For real numbers $x_1, x_2, \ldots, x_n$, maximize $c_1 x_1 + c_2 x_2 + \cdots + c_n x_n$ subject to
+	\begin{align*}
+		a_{1,1} x_1 + a_{1,2} x_2 + \cdots + a_{1,n} x_n & \leq b_1 \\
+		a_{2,1} x_1 + a_{2,2} x_2 + \cdots + a_{2,n} x_n & \leq b_2 \\
+		\vdots                                           &          \\
+		a_{m,1} x_1 + a_{m,2} x_2 + \cdots + a_{m,n} x_n & \leq b_m \\
+		x_1, x_2, \ldots, x_n                            & \geq 0
+	\end{align*}
+\end{definition}
+
+\begin{remark}
+	This definition turns out to be complete for all linear programming problems.
+	\begin{itemize}
+		\item If we have a minimization problem, we can convert it to a maximization problem by negating the $c$ coefficients.
+		\item If there're constraints of the form $a_{i,1} x_1 + a_{i,2} x_2 + \cdots + a_{i,n} x_n \geq b_i$, we can convert it to a constraint of the form $-a_{i,1} x_1 - a_{i,2} x_2 - \cdots - a_{i,n} x_n \leq -b_i$.
+		\item If there're equality constraints of the form $a_{i,1} x_1 + a_{i,2} x_2 + \cdots + a_{i,n} x_n = b_i$, we can convert it to two constraints of the form $a_{i,1} x_1 + a_{i,2} x_2 + \cdots + a_{i,n} x_n \leq b_i$ and $-a_{i,1} x_1 - a_{i,2} x_2 - \cdots - a_{i,n} x_n \leq -b_i$.
+		\item If there're variables that can be negative, we can convert them to non-negative variables by introducing new variables. For example, if $x_i$ can be negative, we can introduce two new variables $x_i'$ and $x_i''$ that $x_i = x_i' - x_i''$ and $x_i', x_i'' \geq 0$, and replace $x_i$ with $x_i' - x_i''$ in the objective function and the constraints.
+	\end{itemize}
+\end{remark}
+
+\section {Duality}
+
+For every maximization LP problem, it can either has an empty feasible set, has an unbounded objective, or has an optimal solution. In the last case, the optimal solution is always attained at a vertex of the feasible region.
+But sometimes we want to prove the objective is bounded by some value, or we want to find the optimal solution without drawing the graph.
+
+To show the lower bound, we can just give a feasible solution and calculate the objective value at that solution.
+
+To show the upper bound, however, we have to combine the constraints in a clever way. For example, in the Nuvole problem, we can multiply the first constraint by 2 and the second constraint by 1, and add them together to get $12x + 12y \leq 130$. This implies that $10x + 12y \leq 130$, which gives us an upper bound on the profit.
+
+Suppose to get the tightest upper bound (i.e. the optimal solution), we used $y_1$ times the first constraint, $y_2$ times the second constraint, and $y_3$ times the third constraint. Then we need to minimize $50 y_1 + 30 y_2 + 20 y_3$ subject to
+\begin{align*}
+	5 y_1 + 2 y_2 + y_3   & \geq 10 \\
+	4 y_1 + 4 y_2 + 2 y_3 & \geq 12 \\
+	y_1, y_2, y_3         & \geq 0
+\end{align*}
+
+This is called the \textbf{dual} of the original linear programming problem, and the original problem is called the \textbf{primal} problem.
+
+In a Linear Algebra notation:
+\begin{definition}[Linear Programming in Matrix Form]
+	A linear programming problem can be written in the following form:
+
+	Maximize $c^T x$ subject to $A x \leq b$ and $x \geq 0$, where $A\in \mathbb{R}^{m \times n}$, $b \in \mathbb{R}^m$, $c, x \in \mathbb{R}^n$.
+
+	The dual of this problem is to minimize $b^T y$ subject to $A^T y \geq c$ and $y \geq 0$, where $y\in \mathbb{R}^m$.
+\end{definition}
+
+Now let's try modifying some constraints in the primal problem, and see how the dual problem changes:
+
+\begin{itemize}
+	\item If one of the constraints become $\geq$, the corresponding variable in the dual problem becomes non-positive.
+	\item If one of the constraints become an equality, the corresponding variable in the dual problem will be unconstrained.
+\end{itemize}
+
+\section{Strong Duality Theorem and Complementary Slackness}
+
+We state some theorems without proof here, and give a proof for Weak Duality Theorem:
+
+\begin{theorem}
+	The dual of dual is primal.
+\end{theorem}
+
+\begin{theorem}[Strong Duality Theorem]
+	If the primal problem has an optimal solution, and the dual problem has an optimal solution, then $\OPT(\text{primal}) = \OPT(\text{dual})$.
+	If one problem is infeasible / unbounded, then the other problem is also infeasible / unbounded.
+\end{theorem}
+
+\begin{theorem}[Weak Duality Theorem]
+	If the primal problem has an optimal solution, then $\OPT(\text{primal}) \leq \OPT(\text{dual})$.
+\end{theorem}
+\begin{proof}
+	\begin{align*}
+		\OPT(\text{primal}) & = \sum_{j=1}^n c_j x_j                                        \\
+		                    & \leq \sum_{j=1}^n \left( \sum_{i=1}^m a_{i,j} y_i \right) x_j \\
+		                    & = \sum_{i=1}^m y_i \left( \sum_{j=1}^n a_{i,j} x_j \right)    \\
+		                    & \leq \sum_{i=1}^m y_i b_i                                     \\
+		                    & = \OPT(\text{dual})
+	\end{align*}
+\end{proof}
+
+The Strong Duality Theorem implies $\sum_j c_j x_j^* = \sum_i b_i y_i^*$, where $x^*$ and $y^*$ are the optimal solutions for the primal and dual problems respectively.
+
+Combined with the proof we have for Weak Duality Theorem, we have $c_j x_j^* = (\sum_i a_{i,j} y_i^*) x_j^*$, so either $x_j^* = 0$ or $\sum_i a_{i,j} y_i^* = c_j$ for each $j$. Similarly, either $y_i^* = 0$ or $\sum_j a_{i,j} x_j^* = b_i$ for each $i$. This is called the \textbf{complementary slackness} condition.
+
+In all, we can write a table to summarize the relationship between the primal and dual problems:
+
+\begin{center}
+	\begin{tabular}{|c|c|}
+		\hline
+		Primal                                                  & Dual                                                  \\
+		\hline
+		Maximize                                                & Minimize                                              \\
+		\textcolor{red}{$i$-th constraint $\le$}                & \textcolor{red}{$y_i\ge 0$}                           \\
+		$i$-th constraint $\ge$                                 & $y_i\le 0$                                            \\
+		$i$-th constraint $=$                                   & $y_i$ unconstrained                                   \\
+		\textcolor{red}{$x_j\ge 0$}                             & \textcolor{red}{$j$-th constraint $\ge$}              \\
+		$x_j\le 0$                                              & $j$-th constraint $\le$                               \\
+		$x_j$ unconstrained                                     & $j$-th constraint $=$                                 \\
+		\hline
+		If $x_j \neq 0$                                         & $\implies$ Then $j$-th constraint holds with equality \\
+		Then $i$-th constraint holds with equality $\Leftarrow$ & If $y_i \neq 0$                                       \\
+		\hline
+	\end{tabular}
+\end{center}
+
+Note the red lines stand for the ``standard form'' of the primal and dual problems.
+
+\section{LP in Graph Algorithms}
+
+\subsection{$s$-$t$ Shortest Path}
+
+Intuitively, the LP problem for $s$-$t$ shortest path is as follows:
+
+\begin{align*}
+	\text{minimize} \quad   & \sum_{e\in E} \ell(e) x(e)                                                               \\
+	\text{subject to} \quad & \forall v\in V \quad	\sum_{e=(u,v)} x(e) - \sum_{e'=(v,w)} x(e') = \begin{cases}
+		                                                                                             -1 & v = s            \\
+		                                                                                             1  & v = t            \\
+		                                                                                             0  & \text{otherwise}
+	                                                                                             \end{cases} \\
+	                        & \forall e \in E \quad x(e) \geq 0
+\end{align*}
+
+The dual of this problem is as follows:
+
+\begin{align*}
+	\text{maximize} \quad   & y(t) - y(s)                                         \\
+	\text{subject to} \quad & \forall e=(u,v)\in E \quad y(v) - y(u) \geq \ell(e)
+\end{align*}
+
+We can shift the $y$ values by a constant without changing the constraints, so we can assume $y(s) = 0$. Then the dual problem is to maximize $y(t)$ subject to $y(v) \geq y(u) + \ell(e)$ for all $e=(u,v)\in E$, and $y(s) = 0$. This $y$ function looks like distances from $s$ to each vertex!
+
+Consider the graph as strings connecting each points, and we target to find the furthest length we can pull the string from $s$ to $t$ without breaking any string. One can see this length is exactly the shortest path, and the tightened string is representing the edges we choose as the solution for the primal problem.
+
+\subsection{Max Flow}
+
+We do some alteration to the original max flow problem, and the primal problem is as follows:
+
+\begin{align*}
+	\text{maximize} \quad   & f(t,s)                                                     \\
+	\text{subject to} \quad & \forall v\quad \sum_{(v,w)}f(v,w) - \sum_{(u,v)}f(u,v) = 0 \\
+	                        & \forall (u,v)\quad f(u,v) \leq c(u,v)                      \\
+	                        & \forall (u,v)\quad f(u,v) \geq 0
+\end{align*}
+
+The dual of this problem is as follows:
+
+\begin{align*}
+	\text{minimize} \quad   & \sum_{(u,v)} c(u,v) y(u,v)                                                               \\
+	\text{subject to} \quad & \forall (u,v) \quad y(u) - y(v) + y(u,v) \geq 0                                          \\
+	                        & y(t) - y(s) \geq 1 \quad (\text{there're no constraints that can be labeled as } y(t,s)) \\
+	                        & \forall (u,v) \quad y(u,v) \geq 0
+\end{align*}
+
+Similarly, we shift the $y$ values by a constant to assume $y(s) = 0$. Then the dual problem is to minimize $\sum_{(u,v)} c(u,v) y(u,v)$ subject to $y(t) \geq 1$ and $y(u) - y(v) + y(u,v) \geq 0$ for all $(u,v)\in E$, and $y(u,v) \geq 0$ for all $(u,v)\in E$.
+
+The dual problem can be seen as Min Cut, once we view vertices with $y = 0$ as one half of the cut, vertices with $y = 1$ as the other half of the cut, and the edges with $y = 1$ as the edges crossing the cut.
+
+
+
+
+
+
+
+
+
+
+

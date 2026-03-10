@@ -1,122 +1,87 @@
-\chapter{Max Flow}
 
-\begin{definition}[Flow Network]
-	A \textbf{flow network} is a directed graph $G = (V, E, c)$ with two special vertices $s$ and $t$ called the \textbf{source} and \textbf{sink}, respectively. $c: E \to \mathbb{Z}^+$ is a function that assigns a non-negative integer capacity to each edge.
+
+\section{Dinitz Algorithm}
+
+Dinitz (or Dinic) Algorithm can solve max flow in $O(n^2 m)$ time. Here we first list some definitions:
+
+\begin{definition}[Saturated Edge and Blocking Flow]
+	An edge $e$ is called \textbf{saturated} if $f(e) = c(e)$. $f$ is called a \textbf{blocking flow} if every $s$-$t$ path contains at least one saturated edge.
 \end{definition}
 
-\begin{definition}[Flow]
-	A \textbf{flow} in a flow network $G$ is a function $f: V\times V \to \mathbb{Z}$ that satisfies the following conditions:
-	\begin{itemize}
-		\item \textbf{Capacity constraint}: For every pair of vertices $(u, v) \in V\times V$, we have $f(u, v) \leq c(u, v)$ (let $c(u, v) = 0$ if $(u, v) \notin E$).
-		\item \textbf{Skew symmetry}: For every pair of vertices $(u, v) \in V\times V$, we have $f(u, v) = -f(v, u)$.
-		\item \textbf{Flow conservation}: For every vertex $u \in V\setminus\{s, t\}$, we have $\sum_{(u,x) \in E} f(u, x) = 0$. Here we implicitly assume for every edge, there's a reverse edge with capacity 0 (if it doesn't exist in the original graph).
-	\end{itemize}
-	$v(f) = \sum_{(s, x) \in E} f(s, x) = \sum_{(x, t) \in E} f(x, t)$ is called the \textbf{value} of the flow $f$.
-\end{definition}
+We can then make use of it to design Dinitz Algorithm. The main idea is to find a blocking flow in the residual graph, and then update the flow by adding the blocking flow. We repeat this process until there is no augmenting path in the residual graph.
 
-\section{Ford-Fulkerson Algorithm}
-
-We give a naive algorithm to find a maximum flow:
-
-\begin{enumerate}
-	\item Find a path from $s$ to $t$.
-	\item Push as much flow as possible along this path.
-	\item Find another path that has \textbf{free capacity}.
-	\item Push as much flow as possible along this path.
-	\item Repeat steps 3 and 4 until there is no path from $s$ to $t$ with free capacity.
-\end{enumerate}
-
-The \textbf{free capacity} here seems to be a bit vague, so we need to define it more formally, in a way that makes this algorithm work:
-
-\begin{definition}[Residual Network]
-	Given a flow network $G = (V, E, c)$ and a flow $f$, the \textbf{residual network} $G_f$ is defined as follows:
-	\begin{itemize}
-		\item $c_f(u,v)$ represents the amount of additional flow that could be sent through $(u,v)$ without violating the capacity constraint.
-		\item $c_f(u, v) = c(u, v) - f(u, v)$ for each edge $(u, v) \in E$.
-		\item Only edges with positive capacity appear in $G_f$.
-	\end{itemize}
-\end{definition}
-
-Now we can restate the algorithm as follows:
-
-\begin{algorithm}[H]
-	\caption{Ford-Fulkerson Algorithm}
-	$G_f \gets G$\;
-	Initialize $f$ to be the zero flow\;
-	\While{there is a path $P$ from $s$ to $t$ in $G_f$}
-	{
-		$f' \coloneqq $ maximum flow along $P$\;
-		$f \gets f + f'$\;
+\begin{algorithm}
+	$f\gets 0$\;
+	\While{there is an augmenting path in $G_f$}{
+		$G' = (V,E')$, with $E' \subseteq E(G_f)$ being the edges in shortest path (assuming all edges have length 1) from $s$ in $G_f$\;
+		$f' \gets$ a blocking flow in $G'$\;
+		Update $f\gets f+f'$\;
 	}
-	return $f$\;
+	\Return{$f$}\;
+	\caption{Dinitz Algorithm}\label{alg:dinitz}
 \end{algorithm}
 
 \begin{lemma}
-	$f'' = f + f'$ is a legal flow in $G$.
+	In every iteration of Dinitz Algorithm, the length of the shortest path from $s$ to $t$ in the residual graph increases by at least 1.
 \end{lemma}
-
 \begin{proof}
-	We need to verify the three conditions in the definition of flow:
-	\begin{itemize}
-		\item \textbf{Capacity constraint}: $f''(u,v) = f(u,v)+ f'(u,v)\le f(u,v) + c_f(u,v) = f(u,v) + (c(u,v) - f(u,v)) = c(u,v)$ for every pair of vertices $(u, v) \in V\times V$.
-		\item \textbf{Skew symmetry}: $f''(u, v) = -f''(v, u)$ because we maintain this property throughout the algorithm. When we push flow along a path, we update the flow in both directions accordingly.
-		\item \textbf{Flow conservation}: For every vertex $u \in V\setminus\{s, t\}$, we have $\sum_{(u,x) \in E} f''(u, x) = \sum_{(u,x) \in E} (f(u, x) + f'(u, x)) = \sum_{(u,x) \in E} f(u, x) + \sum_{(u,x) \in E} f'(u, x) = 0 + 0 = 0$.
-	\end{itemize}
+	We can build layers based on the distance from $s$ in the residual graph. Then $G'$ is the subgraph after removing all edges that don't go from a lower layer to a higher layer (also note that all edges can only connect two neighboring layers). Since $f'$ is a blocking flow, there is no path that traverses all layers exactly once (i.e. $L_0 \to L_1 \to \cdots \to L_d$) in $G_{f+f'}$.
+
+	As any newly created edges only go backwards, all paths will be strictly longer. This proves the lemma.
 \end{proof}
 
-\section{Max Flow-Min Cut Theorem}
+Then we give an algorithm for computing blocking flows.
 
-To proof the correctness of the algorithm, we need to introduce the following definition:
-
-\begin{definition}[$s$-$t$ Cut]
-	$(A,B)$ is an \textbf{$s$-$t$ cut} if $A\cup B = V$, $A\cap B = \emptyset$, $s \in A$ and $t \in B$.
-
-	The capacity of the cut is defined as $c(A, B) = \sum_{(u, v) \in E, u \in A, v \in B} c(u, v)$. For any flow $f$, $v(f) \leq c(A, B)$.
-\end{definition}
-
-\begin{theorem}[Max Flow-Min Cut Theorem]
-	The following statements are equivalent:
-	\begin{itemize}
-		\item $f$ is a maximum flow in $G$.
-		\item There is no path from $s$ to $t$ in the residual network $G_f$.
-		\item There exists an $s$-$t$ cut $(A, B)$ such that $v(f) = c(A, B)$.
-	\end{itemize}
-\end{theorem}
-\begin{proof}
-	(1) $\Rightarrow$ (2): We prove the contrapositive. If there is a path from $s$ to $t$ in the residual network $G_f$, we can push more flow along this path, which contradicts the assumption that $f$ is a maximum flow.
-
-	(2) $\Rightarrow$ (3): Let $A = \{v \in V : v \text{ is reachable from } s \text{ in } G_f\}$ and $B = V\setminus A$. Then $(A, B)$ is an $s$-$t$ cut. Since there is no path from $s$ to $t$ in $G_f$, we have $t \in B$. For every edge $(u, v)$ with $u \in A$ and $v \in B$, we have $c_f(u, v) = 0$, which implies that $f(u, v) = c(u, v)$. Therefore, $v(f) = \sum_{(s, x) \in E} f(s, x) = \sum_{u\in A} \sum_{(u, x) \in E} f(u, x) =\sum_{(u, v) \in E, u \in A, v \in B} f(u, v) = \sum_{(u, v) \in E, u \in A, v \in B} c(u, v) = c(A, B)$.
-
-	(3) $\Rightarrow$ (1): For any flow $f'$, we have $v(f') \leq c(A, B) = v(f)$, which implies that $f$ is a maximum flow.
-\end{proof}
-
-The efficiency of the Ford-Fulkerson algorithm is $O(m \cdot v(f))$, as it takes $O(m)$ time to find a path, and augmenting the flow along the path can increase the flow value by at least 1. However, if the capacities are irrational numbers, the algorithm may not terminate.
-
-To improve Ford-Fulkerson Algorithm, we can choose path greedily, so that the bottleneck edges are maximized.
+\begin{algorithm}
+	\While{there is an $s$-$t$ path in $G'$}{
+		Apply DFS to find an $s$-$t$ path $p$ in $G'$\;
+		Delete edges during backtracking, as they can't connect to $t$\;
+		Push flow along $p$ by the bottleneck edge, and delete all saturated edges\;
+	}
+	\Return the flow\;
+	\caption{Blocking Flow Algorithm}\label{alg:blocking}
+\end{algorithm}
 
 \begin{lemma}
-	Denote the next augmenting path as $p$, and let $\delta := v(f_{\max})-v(f)$ be the value of max flow in $G_f$. Then we have $v(f_p) \ge \delta/m$ if we maximize bottleneck edges.
+	The blocking flow algorithm runs in $O(nm)$ time. If $\forall e\in E, c(e) =1$, then it runs in $O(m)$ time.
 \end{lemma}
 \begin{proof}
-	Here we proof by contradiction. Assume that $v(f_p) < \delta/m$.
+	Every iteration, we delete at least one edge, so there are at most $O(m)$ iterations. Each iteration takes $O(n)$ time to find a path and update the flow.
 
-	Then we can remove all edges with $c_f(e) < \delta/m$ from $G_f$, and expect $s$ and $t$ are unconnected.
-
-	The capacity of such cut is less than $m \cdot \delta/m = \delta \Rightarrow \contra$.
+	If all edges have capacity 1, then each edge can only be saturated once, so the total time is $O(m)$.
 \end{proof}
 
-Therefore, $v(f_p)\ge \delta/m = (v(f_{\max})-v(f))/m$.
-If we denote $\Delta_i := v(f_{\max})-v(f_i)$, where $f_i$ is the flow after the $i$-th iteration, we have $\Delta_{i+1} \leq \Delta_i - \frac{\Delta_i}{m} = \Delta_i (1 - \frac{1}{m})$. This implies that $\Delta_i \leq v(f_{\max})(1 - \frac{1}{m})^i < v(f_{\max}) e^{-i/m}$. To guarantee that $\Delta_i < 1$, $i = m \log v(f_{\max})$ suffices for integer-capacity graphs.
-
-It means that the number of iterations is at most $O(m \log v(f_{\max}))$, so the total time complexity is $O(m^2 \log v(f_{\max}))$.
-
-\section{Examples using Max Flow}
-
-\begin{question}[Max Matching in Bipartite Graph]
-	Given a bipartite graph $G = (V, E)$ with $V = L \cup R$, find the maximum matching in $G$.
-\end{question}
-
-One can use it to prove Hall's theorem:
-\begin{theorem}[Hall's Theorem]
-	If a bipartite graph $G = (L \cup R, E)$ does not have a perfect matching, then there exists a subset $S \subseteq V$ such that $|N(S)| < |S|$, where $N(S)$ is the set of neighbors of $S$ in $V$.
+\begin{theorem}
+	The Dinitz Algorithm runs in $O(n^2 m)$ time. If $c(s,u)$ and $c(v,t)$ are arbitrary, but all other edges have capacity 1, then it runs in $O(\min\{m^{3/2}, n^{2/3} m\})$ time.
 \end{theorem}
+\begin{proof}
+	\begin{itemize}
+		\item	As the distance from $s$ to $t$ increases by at least 1 in each iteration, there are at most $n-1$ iterations. Each iteration takes $O(nm)$ time, so the total time is $O(n^2 m)$.
+
+		\item For the $m^{3/2}$ bound, we see that after $\sqrt{m}$ iterations, the distance from $s$ to $t$ is at least $\sqrt{m}+1$ and we have at least $\sqrt{m}+2$ layers, if we consider $s$ and $t$ as layers $L_0$ and $L_{\sqrt{m}+1}$ respectively.
+
+		      We can find a cut between neighboring layers, so there are at least $\sqrt{m}$ cuts, where any edge can cross at most 1 cut. As the total capacity of all edges is $m$, we can guarantee that there is a cut with capacity at most $\sqrt{m}$. This means that the min cut of this graph (equivalently, max flow) is at most $\sqrt{m}$, so the total time is $O(m^{3/2})$ as we only need to iterate $\sqrt{m}$ times more.
+
+		\item For the $n^{2/3} m$ bound, we see that after $3n^{2/3}$ iterations, the distance from $s$ to $t$ is at least $3n^{2/3}+1$ and we have at least $3n^{2/3}+2$ layers.
+
+		      Then we see the average size of layers have size smaller than $n^{1/3}/3$, so at most $1/3$ of the layers have size greater than $n^{1/3}$ according to Markov's Inequality.
+
+		      From Pigeonhole Principle, there are at least a pair of two neighboring layers with size smaller than $n^{1/3}$, so the cut between them has capacity at most $n^{2/3}$. This means that the min cut of this graph is at most $n^{2/3}$, and the rest follows similarly to the previous case.
+	\end{itemize}
+\end{proof}
+\begin{remark}
+	The $O(m^{3/2})$ bound can hold even when the graph is not simple, i.e. there can be multiple (a.k.a. parallel) edges between two vertices, but the $O(n^{2/3} m)$ bound won't hold there.
+\end{remark}
+
+\begin{theorem}
+	A max matching in a bipartite graph can be found in $O(m\sqrt{n})$ time.
+\end{theorem}
+\begin{proof}
+	We give direction to the edges, so that all edges are directed from $L$ to $R$. Then we can add two vertices $s$ and $t$,	adding $s$ connecting to all vertices in $L$, and $t$ connected by all vertices in $L$, with all edges having capacity 1. Then we can apply Dinitz Algorithm to find the max flow.
+
+	After $2\sqrt{n}$ iterations, we have at least $2\sqrt{n}+2$ layers.
+
+	Note that most of the edges are pointing from an odd layer to an even layer: the edges pointing from even layers to odd ones are `newly created' after pushing some flows and generating edges in the opposite direction, so they are indicating edges that are already matched.
+
+	As the number of matched edges is at most $n$, the total number of `reverse' edges is at most $n$ as well. The number of cuts that cut from even layers to odd layers are $\sqrt{n}$, so there is a cut with capacity at most $n/\sqrt{n} = \sqrt{n}$. This means that the max flow is at most $\sqrt{n}$, so we only need to iterate $\sqrt{n}$ times more, which gives us the total time of $O(m\sqrt{n})$.
+\end{proof}

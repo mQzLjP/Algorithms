@@ -1,77 +1,239 @@
-\chapter{Shortest Paths}
+\begin{lemma}
+	For any graph with no negative weight cycle, $\exists p$, s.t. $\ell_p(u,v) \ge 0$ for any $(u,v) \in E$.
+\end{lemma}
+\begin{proof}
+	We add a new vertex $s$ and connect it to all other vertices with zero weight edge. Then we run Bellman-Ford algorithm on this new graph $G'$ and let $p(v) = \text{dist}_{G'}(s,v)$.
+	As $\dist(s,v) \le \dist(s,u) + \ell(u,v)$, we have $\ell_p(u,v) = \ell(u,v) + p(u) - p(v) = \ell(u,v) + \dist(s,u) - \dist(s,v) \ge 0$.
+\end{proof}
 
-\begin{definition}[Shortest Path and Shortest Distance]
-	Given a graph $G = (V, E)$, a length function $\ell: E \to \mathbb{R}$ and two vertices $s, t \in V$, the shortest path denoted as $P_{st}$ is a path from $s$ to $t$ with the minimum total length, i.e., $\ell(P_{st}) = \sum_{e \in P_{st}} \ell(e)$ is minimized.	The length of the shortest path is called the shortest distance, denoted as $\text{dist}(s, t)$.
 
-	Also we denote $n = |V|$ and $m = |E|$ as the number of vertices and edges in the graph, respectively.
-\end{definition}
+\subsection{Dijkstra's Algorithm}
 
-\begin{remark}
-	$P_{st}$ and $\text{dist}(s,t)$ might not be well-defined if there are negative weight cycles in the graph. In this case, one can keep going around the negative weight cycle to reduce the total length of the path indefinitely.
+Now assume $\ell: E \to \mathbb{R}^+ \cup \{0\}$, we can use Dijkstra's algorithm to find the shortest path from a source vertex to all other vertices in $O(m + n \log n)$ time.
 
-	Here we assume that there are no negative weight cycles in the graph, so that $P_{st}$ and $\text{dist}(s,t)$ are well-defined.
-\end{remark}
-
-There're two versions of the shortest path problem: \textbf{Single Source Shortest Path (SSSP)} and \textbf{All Pairs Shortest Path (APSP)}. In SSSP, we want to find the shortest path from a source vertex to all other vertices. In APSP, we want to find the shortest path between every pair of vertices.
-
-One can prove that the $s$-$t$ shortest path (where both $s$ and $t$ are given) is at least as hard as SSSP (where only $s$ is given).
-
-\section{SSSP: Bellman-Ford Algorithm}
-
-\begin{question}
-	Given a graph $G = (V, E)$, a length function $\ell: E \to \mathbb{R}$ and a source vertex $s \in V$, how to find the shortest path from $s$ to all other vertices?
-\end{question}
-
-A naive recursive relation is $\text{dist}(s, t) = \min_{(u, t) \in E} (\text{dist}(s, u) + \ell(u, t))$ for $t \neq s$ and $\text{dist}(s, s) = 0$. However, this recursive relation is not quite correct as there exists some circular dependencies.
-
-Here we state some lemmas that will be useful for designing the algorithm.
+Denote $\dist_S(s,v)$ as the distance from $s$ to $v$ in the subgraph induced by $S\cup \{v\}$, we have the following claim and observation:
 
 \begin{lemma}
-	\label{lemma:shortest-path-subpath}
-	Any subpath of a shortest path is also a shortest path.
+	If $v\not\in S$ minimizes $\dist_S(s,v)$, then $\dist_S(s,v) = \dist(s,v)$.
 \end{lemma}
+\begin{proof}
+	Let $P$ be the shortest path from $s$ to $v$. If $P$ only contains vertices in $S\cup \{v\}$, then $\dist_S(s,v) = \dist(s,v)$ and we are done. Otherwise, let $u$ be the first vertex in $P$ that is not in $S$. Then the subpath from $s$ to $u$ only contains vertices in $S$, so $\dist_S(s,u) = \dist(s,u)$. As $\dist(u,v)\ge 0$ and $v$ minimizes $\dist_S(s,v)$, we have $\dist_S(s,v) \le \dist_S(s,u) + \dist(u,v) = \dist(s,u) + \dist(u,v) = \dist(s,v)$. On the other hand, as $S\cup \{v\}$ is a subgraph of $G$, we have $\dist_S(s,v) \ge \dist(s,v)$. Therefore, $\dist_S(s,v) = \dist(s,v)$.
+\end{proof}
 
 \begin{corollary}
-	\label{corollary:shortest-path-simple}
-	There exists a shortest path that has at most $n-1$ edges if the graph is connected.
+	If we list vertices in increasing order of their distance from $s$, then for any vertex $v$, the shortest path from $s$ to $v$ only contains vertices that are listed before $v$.
 \end{corollary}
 
-The above lemma and corollary suggest that we can find the shortest path by iteratively relaxing the edges. We can define $\text{dist}^{(i)}(s, t)$ as the length of the shortest path from $s$ to $t$ that has at most $i$ edges. Then we have the following recursive relation:
+Therefore, we can start with an empty $S$ and iteratively add the vertex that minimizes $\dist_S(s,v)$ until all vertices are added, with the loop invariant on $d(v)$ that we maintain:
 
-\[ \text{dist}^{(i)}(s, t) = \min\left( \text{dist}^{(i-1)}(s, t), \min_{(u, t) \in E} (\text{dist}^{(i-1)}(s, u) + \ell(u, t)) \right) \]
+\begin{itemize}
+	\item If $v\in S$, then $d(v) = \dist(s,v)$.
+	\item If $v\not\in S$, then $d(v) = \dist_S(s,v)$.
+\end{itemize}
 
-Therefore, we can compute $\text{dist}^{(i)}(s, t)$ for $i = 0, 1, \ldots, n-1$ and the final answer will be $\text{dist}^{(n-1)}(s, t)$. The time complexity of this algorithm is $O(nm)$, which is known as the Bellman-Ford algorithm.
+\begin{algorithm}[H]
+	\caption{Dijkstra's Algorithm}
+	Initialize $S = \emptyset$ and $d(v) = \infty$ for all $v\in V\setminus \{s\}$, $d(s) = 0$\;
+	Insert all vertices into a set $Q$ with key $d(v)$\;
+	\While {$Q$ is not empty}{
+		$v \gets $ vertex in $Q$ with minimum key, $Q$ delete $v$\;
+		$S \gets S\cup \{v\}$\;
+		For each edge $(v,u)\in E \land u\in Q$, $d(u) \gets \min(d(u), d(v) + \ell(v,u))$\;
+	}
+	\Return{$d$}
+\end{algorithm}
 
-\section{APSP: Floyd-Warshall Algorithm}
+The set $Q$ should be a priority queue that supports the following operations:
+\begin{itemize}
+	\item insert$(x,k)$: $Q:=Q\cup \{x\}, d(x) := k$.
+	\item deletemin: return $x$ with minimum $d(x)$ and $Q := Q\setminus \{x\}$.
+	\item decreasekey$(x,k)$: $d(x) := \min\{d(x), k\}$.
+\end{itemize}
 
-\begin{question}
-	Given a graph $G = (V, E)$ and a length function $\ell: E \to \mathbb{R}$, how to find the shortest path between every pair of vertices?
-\end{question}
+If we maintain the priority queue with a binary heap, the time complexity is $O(m \log n)$. This is because insert, deletemin and decreasekey operations all take $O(\log n)$ time.
+However, here we present a new data structure that has amortized $O(1)$ time for insert and decreasekey, and $O(\log n)$ time for deletemin, that leads to a time complexity of $O(m + n \log n)$ for Dijkstra's algorithm.
 
-If we apply the Bellman-Ford algorithm for each vertex as the source, we can find the shortest path between every pair of vertices in $O(n^2 m) = O(n^4)$ time. However we can find a recursion that converges in a more aggressive way.
+\section{Fibonacci Heap}
 
-Following the same notation of $\text{dist}^{(i)}(s, t)$ as the length of the shortest path from $s$ to $t$ that has at most $i$ edges, instead of increasing $i$ by 1, we can double $i$ in each iteration by iterating the midpoints of the paths (as we now have distances between any pairs). Specifically, we have the following recursive relation:
+To start with, we need to define some concepts on rooted trees.
 
-\[ \text{dist}^{(2i)}(s, t) = \min_{u \in V} (\text{dist}^{(i)}(s, u) + \text{dist}^{(i)}(u, t)) \]
+\begin{definition}[Heap-ordered Tree]
+	A rooted tree $T$ is heap-ordered if for any node $u$ and its parent $v$, we have $d(v) \le d(u)$.
+\end{definition}
+\begin{note}
+	Two heap-ordered trees $T_1$ and $T_2$ can be merged by making the root of the tree with larger key the child of the root of the tree with smaller key. This operation takes $O(1)$ time.
+\end{note}
 
-That gives a time complexity of $O(n^3 \log n)$.
+\begin{definition}[Binomial Tree]
+	A binomial tree $B_k$ with rank $k$ is defined recursively as follows:
+	\begin{itemize}
+		\item $B_0$ is a single node.
+		\item $B_k$ consists of two $B_{k-1}$ trees, where the root of one $B_{k-1}$ is the rightmost child of the root of the other $B_{k-1}$.
+	\end{itemize}
+\end{definition}
 
-In fact, we can do better with a different way of breaking circular dependencies. We can define $\text{dist}^{[k]}(s, t)$ as the length of the shortest path from $s$ to $t$ that only uses vertices in $\{v_1,v_2,\ldots,v_k\}$ as intermediate vertices. Then we have the following recursive relation:
+For example, $B_4$ is shown below:
 
-\[ \text{dist}^{[k]}(s, t) = \min\left( \text{dist}^{[k-1]}(s, t), \text{dist}^{[k-1]}(s, v_k) + \text{dist}^{[k-1]}(v_k, t) \right) \]
+\begin{center}
+	\begin{forest}
+		for tree={
+		circle,             % Shape of the nodes
+		draw,               % Draw the border
+		minimum size=2em,   % Size of the nodes
+		inner sep=1pt,
+		math content,       % Allows using math mode inside nodes automatically
+		s sep=5mm,          % Minimum horizontal distance between siblings
+		l sep=10mm,         % Vertical distance between levels
+		edge={semithick}    % Thickness of the connecting lines
+		}
+		% Root of B_4
+		[B_4
+		% Child: B_0
+		[B_0]
+		% Child: B_1
+		[B_1
+		[B_0]
+		]
+		% Child: B_2
+		[B_2
+		[B_0]
+		[B_1 [B_0]]
+		]
+		% Child: B_3
+		[B_3
+		% Child of B_3: B_0
+		[B_0]
+		% Child of B_3: B_1
+		[B_1 [B_0]]
+		% Child of B_3: B_2
+		[B_2
+		[B_0]
+		[B_1 [B_0]]
+		]
+		]
+		]
+	\end{forest}
+\end{center}
 
-This gives a time complexity of $O(n^3)$, which is known as the Floyd-Warshall algorithm.
+One can find that there're $\binom{k}{i}$ nodes of depth $i$ in $B_k$, and the total number of nodes in $B_k$ is $\sum_{i=0}^k \binom{k}{i} = 2^k$ (that's why it's called a binomial tree.)
+Moreover, the subtree rooted at the $i$-th child of the root of $B_k$ is a $B_{i-1}$ tree.
 
-\section{APSP and SSSP+: Dijkstra's Algorithm and Fibonacci Heap}
+Now we collect multiple binomial trees into a binomial heap:
 
-For Dijkstra's algorithm to work, we need to guarantee that there're no negative weight edges in the graph, i.e. the weight function should now be $\ell: E \to \RR^+ \cup \{0\}$.
+\begin{definition}[Binomial Heap]
+	A binomial heap is a collection of heap-ordered binomial trees, where there is at most one binomial tree of any rank.
+\end{definition}
 
-\subsection{Getting Rid of Negative Weight Edges}
+In this data structure, insert and deletemin are easy to implement.
 
-Can we construct a graph $G'$ with weights $\ell': E \to \mathbb{R}$ such that $\ell'(e) \geq 0$ for all $e \in E$ and the shortest path in $G'$ is the same as the shortest path in $G$? We can!
+For insert$(x,k)$, we
+\begin{itemize}
+	\item Create a new $B_0$ tree that contains a single node $x$ with key $k$.
+	\item Merge $H$ with the current binomial heap, if there are two trees of the same rank, we merge them into a tree of higher rank until there is at most one tree of any rank.
+\end{itemize}
 
-Consider a prize function $p: V \to \mathbb{R}$ and define $\ell_p(u, v) = \ell(u, v) + p(u) - p(v)$ for each edge $(u, v) \in E$. Then we have:
+For deletemin, we
+\begin{itemize}
+	\item Find the tree $B_k$ with minimum root key, and remove the root $x$ from $B_k$.
+	\item Let $H'$ be the binomial heap formed by the children of $x$, we merge $H'$ with the current binomial heap, and link the trees of the same rank until there is at most one tree of any rank.
+\end{itemize}
 
-\[ \ell_p(P_{st}) = \sum_{(u, v) \in P_{st}} \ell_p(u, v) = \sum_{(u, v) \in P_{st}} (\ell(u, v) + p(u) - p(v)) = \ell(P_{st}) + p(s) - p(t) \]
+\begin{lemma}
+	insert and deletemin operations on a binomial heap with $n$ nodes take $O(\log n)$ time.
+\end{lemma}
+\begin{proof}
+	All sub-operations are $O(1)$, so the operation is dominated by the number of linkings.
+	As every linking reduces the number of trees by one, and there are at most $O(\log n)$ trees in a binomial heap with $n$ nodes, the number of linkings is at most $O(\log n)$.
+\end{proof}
 
-For any path $P_{st}$ from $s$ to $t$, the offset $p(s) - p(t)$ is the same, so the shortest path in $G$ is also the shortest path in $G'$.
+However this structure does not support decreasekey operation efficiently. To solve this problem, we introduce the Fibonacci heap, which is a more relaxed version of the binomial heap.
+
+\begin{definition}[Fibonacci Heap]
+	A Fibonacci heap is a collection of heap-ordered trees, where there is no restriction on the number of trees of the same rank.
+\end{definition}
+
+While the insert and deletemin operations are the same as in a binomial heap, the decreasekey operation is implemented as follows:
+
+\begin{itemize}
+	\item Let $x$ be the node whose key is decreased, and $y$ be the parent of $x$.
+	\item Cut the edge between $x$ and $y$, and make $x$ a new tree in the heap.
+	\item Mark $y$. If $y$ is already marked (i.e. it lost 2 children), we cut the edge between $y$ and its parent (and mark the parent as well), and make $y$ a new tree in the heap. We repeat this process until we reach a root or an unmarked node.
+\end{itemize}
+
+\begin{definition}
+	The rank of a tree (or the root of the tree) is $k$ if its root has $k$ children, or it has $k-1$ children and is marked.
+\end{definition}
+
+\begin{lemma}
+	The $i$-th child of a node with rank $k$ has rank at least $i-1$.
+\end{lemma}
+\begin{proof}
+	We prove by induction on $i$. For $i=1$, the claim is trivial. Assume the claim holds for $i-1$, we want to show that the $i$-th child of a node with rank $k$ has rank at least $i-1$.
+
+	When the $i$-th child is linked to the root, the root has at least $i-1$ children, so its rank is at least $i-1$. When a child is cut from its parent, the rank `requirement' of the other children will only be looser, so the $i$-th child will still have rank at least $i-1$.
+
+	In all, the lemma holds.
+\end{proof}
+
+Denote $T_k$ to be the minimum size of a tree with rank $k$, we have $T_0 = 1, T_1 = 2$, and $T_k \ge 1 + T_0 + T_1 + \cdots + T_{k-3} + T_{k-2}$ for $k\ge 2$ (as we can't guarantee whether that last child exists), which leads to $T_k \ge T_{k-1} + T_{k-2}$ for $k\ge 2$.
+
+One can find that $T_k$ is the Fibonacci sequence, so $T_k \ge F_k \ge \phi^{k+1}$, where $\phi = \frac{1+\sqrt{5}}{2}$ is the golden ratio. Therefore, we have:
+
+\begin{corollary}
+	The maximum rank of a tree in a Fibonacci heap with $n$ nodes is at most $O(\log n)$.
+\end{corollary}
+
+Now we are ready to analyze the time complexity of the operations on a Fibonacci heap.
+
+\begin{theorem}
+	The insert and decreasekey operations on a Fibonacci heap with $n$ nodes take $O(1)$ amortized time, and the deletemin operation takes $O(\log n)$ amortized time.
+\end{theorem}
+\begin{proof}
+	We start by defining a potential function. Note that:
+	\begin{itemize}
+		\item Linking reduces the number of trees.
+		\item Cutting increases the number of trees, but decreases the number of marked nodes (or increase with an upper bound of 1).
+	\end{itemize}
+	Therefore, we can let the potential function be $\Phi = t + 2m$, where $t$ is the number of trees and $m$ is the number of marked nodes in the heap. The amortized cost of any operation is then $a_i = t_i + \Delta_i$, with $\Delta_i$ being the change of the potential function.
+
+	Suppose the $i$-th operation is insert$(x,k)$, we create a new tree with $x$ as the root, then link the trees that have the same rank, so $t_i = \text{\# linkings} + 1$. On the other hand, each linking reduces the number of trees by one, so $\Delta_i = 1 - \text{\# linkings}$ (the 1 comes from the new tree), therefore, $a_i = t_i + \Delta_i = 2$.
+
+	Suppose the $i$-th operation is decreasekey$(x,k)$, we cut $x$ from its parent, then recursively cut the parents if they're marked, and link the trees with the same rank, so $t_i = \text{\# linkings} + \text{\# cuts}$. Let the number of cuts be $c$, then the number of trees increases by $c$ and then decreases by the number of linkings, and the number of marked nodes decreases by $c-2$ (increases if $c-2$ is negative.) This means $\Delta_i = \text{\# cuts} - \text{\# linkings} - 2(\text{\# cuts} - 2) = 4 - \text{\# linkings} - \text{\# cuts}$, therefore, $a_i = t_i + \Delta_i = 4$.
+
+	Suppose the $i$-th operation is deletemin, we find the tree with minimum root key, remove the root $x$ from the tree, and link the trees with the same rank. Let $k$ be the rank of the tree, then we have $t_i = O(k) + \text{\# linkings}$ (the $O(k)$ comes finding the minimum), and $\Delta_i = O(k) - \text{\# linkings}$, therefore, $a_i = t_i + \Delta_i = O(k) = O(\log n)$.
+
+	This completes the proof.
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

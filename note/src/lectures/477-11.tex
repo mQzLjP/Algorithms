@@ -1,239 +1,122 @@
-\begin{lemma}
-	For any graph with no negative weight cycle, $\exists p$, s.t. $\ell_p(u,v) \ge 0$ for any $(u,v) \in E$.
-\end{lemma}
-\begin{proof}
-	We add a new vertex $s$ and connect it to all other vertices with zero weight edge. Then we run Bellman-Ford algorithm on this new graph $G'$ and let $p(v) = \text{dist}_{G'}(s,v)$.
-	As $\dist(s,v) \le \dist(s,u) + \ell(u,v)$, we have $\ell_p(u,v) = \ell(u,v) + p(u) - p(v) = \ell(u,v) + \dist(s,u) - \dist(s,v) \ge 0$.
-\end{proof}
+\chapter{Max Flow}
 
+\begin{definition}[Flow Network]
+	A \textbf{flow network} is a directed graph $G = (V, E, c)$ with two special vertices $s$ and $t$ called the \textbf{source} and \textbf{sink}, respectively. $c: E \to \mathbb{Z}^+$ is a function that assigns a non-negative integer capacity to each edge.
+\end{definition}
 
-\subsection{Dijkstra's Algorithm}
+\begin{definition}[Flow]
+	A \textbf{flow} in a flow network $G$ is a function $f: V\times V \to \mathbb{Z}$ that satisfies the following conditions:
+	\begin{itemize}
+		\item \textbf{Capacity constraint}: For every pair of vertices $(u, v) \in V\times V$, we have $f(u, v) \leq c(u, v)$ (let $c(u, v) = 0$ if $(u, v) \notin E$).
+		\item \textbf{Skew symmetry}: For every pair of vertices $(u, v) \in V\times V$, we have $f(u, v) = -f(v, u)$.
+		\item \textbf{Flow conservation}: For every vertex $u \in V\setminus\{s, t\}$, we have $\sum_{(u,x) \in E} f(u, x) = 0$. Here we implicitly assume for every edge, there's a reverse edge with capacity 0 (if it doesn't exist in the original graph).
+	\end{itemize}
+	$v(f) = \sum_{(s, x) \in E} f(s, x) = \sum_{(x, t) \in E} f(x, t)$ is called the \textbf{value} of the flow $f$.
+\end{definition}
 
-Now assume $\ell: E \to \mathbb{R}^+ \cup \{0\}$, we can use Dijkstra's algorithm to find the shortest path from a source vertex to all other vertices in $O(m + n \log n)$ time.
+\section{Ford-Fulkerson Algorithm}
 
-Denote $\dist_S(s,v)$ as the distance from $s$ to $v$ in the subgraph induced by $S\cup \{v\}$, we have the following claim and observation:
+We give a naive algorithm to find a maximum flow:
 
-\begin{lemma}
-	If $v\not\in S$ minimizes $\dist_S(s,v)$, then $\dist_S(s,v) = \dist(s,v)$.
-\end{lemma}
-\begin{proof}
-	Let $P$ be the shortest path from $s$ to $v$. If $P$ only contains vertices in $S\cup \{v\}$, then $\dist_S(s,v) = \dist(s,v)$ and we are done. Otherwise, let $u$ be the first vertex in $P$ that is not in $S$. Then the subpath from $s$ to $u$ only contains vertices in $S$, so $\dist_S(s,u) = \dist(s,u)$. As $\dist(u,v)\ge 0$ and $v$ minimizes $\dist_S(s,v)$, we have $\dist_S(s,v) \le \dist_S(s,u) + \dist(u,v) = \dist(s,u) + \dist(u,v) = \dist(s,v)$. On the other hand, as $S\cup \{v\}$ is a subgraph of $G$, we have $\dist_S(s,v) \ge \dist(s,v)$. Therefore, $\dist_S(s,v) = \dist(s,v)$.
-\end{proof}
+\begin{enumerate}
+	\item Find a path from $s$ to $t$.
+	\item Push as much flow as possible along this path.
+	\item Find another path that has \textbf{free capacity}.
+	\item Push as much flow as possible along this path.
+	\item Repeat steps 3 and 4 until there is no path from $s$ to $t$ with free capacity.
+\end{enumerate}
 
-\begin{corollary}
-	If we list vertices in increasing order of their distance from $s$, then for any vertex $v$, the shortest path from $s$ to $v$ only contains vertices that are listed before $v$.
-\end{corollary}
+The \textbf{free capacity} here seems to be a bit vague, so we need to define it more formally, in a way that makes this algorithm work:
 
-Therefore, we can start with an empty $S$ and iteratively add the vertex that minimizes $\dist_S(s,v)$ until all vertices are added, with the loop invariant on $d(v)$ that we maintain:
+\begin{definition}[Residual Network]
+	Given a flow network $G = (V, E, c)$ and a flow $f$, the \textbf{residual network} $G_f$ is defined as follows:
+	\begin{itemize}
+		\item $c_f(u,v)$ represents the amount of additional flow that could be sent through $(u,v)$ without violating the capacity constraint.
+		\item $c_f(u, v) = c(u, v) - f(u, v)$ for each edge $(u, v) \in E$.
+		\item Only edges with positive capacity appear in $G_f$.
+	\end{itemize}
+\end{definition}
 
-\begin{itemize}
-	\item If $v\in S$, then $d(v) = \dist(s,v)$.
-	\item If $v\not\in S$, then $d(v) = \dist_S(s,v)$.
-\end{itemize}
+Now we can restate the algorithm as follows:
 
 \begin{algorithm}[H]
-	\caption{Dijkstra's Algorithm}
-	Initialize $S = \emptyset$ and $d(v) = \infty$ for all $v\in V\setminus \{s\}$, $d(s) = 0$\;
-	Insert all vertices into a set $Q$ with key $d(v)$\;
-	\While {$Q$ is not empty}{
-		$v \gets $ vertex in $Q$ with minimum key, $Q$ delete $v$\;
-		$S \gets S\cup \{v\}$\;
-		For each edge $(v,u)\in E \land u\in Q$, $d(u) \gets \min(d(u), d(v) + \ell(v,u))$\;
+	\caption{Ford-Fulkerson Algorithm}
+	$G_f \gets G$\;
+	Initialize $f$ to be the zero flow\;
+	\While{there is a path $P$ from $s$ to $t$ in $G_f$}
+	{
+		$f' \coloneqq $ maximum flow along $P$\;
+		$f \gets f + f'$\;
 	}
-	\Return{$d$}
+	return $f$\;
 \end{algorithm}
 
-The set $Q$ should be a priority queue that supports the following operations:
-\begin{itemize}
-	\item insert$(x,k)$: $Q:=Q\cup \{x\}, d(x) := k$.
-	\item deletemin: return $x$ with minimum $d(x)$ and $Q := Q\setminus \{x\}$.
-	\item decreasekey$(x,k)$: $d(x) := \min\{d(x), k\}$.
-\end{itemize}
+\begin{lemma}
+	$f'' = f + f'$ is a legal flow in $G$.
+\end{lemma}
 
-If we maintain the priority queue with a binary heap, the time complexity is $O(m \log n)$. This is because insert, deletemin and decreasekey operations all take $O(\log n)$ time.
-However, here we present a new data structure that has amortized $O(1)$ time for insert and decreasekey, and $O(\log n)$ time for deletemin, that leads to a time complexity of $O(m + n \log n)$ for Dijkstra's algorithm.
-
-\section{Fibonacci Heap}
-
-To start with, we need to define some concepts on rooted trees.
-
-\begin{definition}[Heap-ordered Tree]
-	A rooted tree $T$ is heap-ordered if for any node $u$ and its parent $v$, we have $d(v) \le d(u)$.
-\end{definition}
-\begin{note}
-	Two heap-ordered trees $T_1$ and $T_2$ can be merged by making the root of the tree with larger key the child of the root of the tree with smaller key. This operation takes $O(1)$ time.
-\end{note}
-
-\begin{definition}[Binomial Tree]
-	A binomial tree $B_k$ with rank $k$ is defined recursively as follows:
+\begin{proof}
+	We need to verify the three conditions in the definition of flow:
 	\begin{itemize}
-		\item $B_0$ is a single node.
-		\item $B_k$ consists of two $B_{k-1}$ trees, where the root of one $B_{k-1}$ is the rightmost child of the root of the other $B_{k-1}$.
+		\item \textbf{Capacity constraint}: $f''(u,v) = f(u,v)+ f'(u,v)\le f(u,v) + c_f(u,v) = f(u,v) + (c(u,v) - f(u,v)) = c(u,v)$ for every pair of vertices $(u, v) \in V\times V$.
+		\item \textbf{Skew symmetry}: $f''(u, v) = -f''(v, u)$ because we maintain this property throughout the algorithm. When we push flow along a path, we update the flow in both directions accordingly.
+		\item \textbf{Flow conservation}: For every vertex $u \in V\setminus\{s, t\}$, we have $\sum_{(u,x) \in E} f''(u, x) = \sum_{(u,x) \in E} (f(u, x) + f'(u, x)) = \sum_{(u,x) \in E} f(u, x) + \sum_{(u,x) \in E} f'(u, x) = 0 + 0 = 0$.
 	\end{itemize}
-\end{definition}
-
-For example, $B_4$ is shown below:
-
-\begin{center}
-	\begin{forest}
-		for tree={
-		circle,             % Shape of the nodes
-		draw,               % Draw the border
-		minimum size=2em,   % Size of the nodes
-		inner sep=1pt,
-		math content,       % Allows using math mode inside nodes automatically
-		s sep=5mm,          % Minimum horizontal distance between siblings
-		l sep=10mm,         % Vertical distance between levels
-		edge={semithick}    % Thickness of the connecting lines
-		}
-		% Root of B_4
-		[B_4
-		% Child: B_0
-		[B_0]
-		% Child: B_1
-		[B_1
-		[B_0]
-		]
-		% Child: B_2
-		[B_2
-		[B_0]
-		[B_1 [B_0]]
-		]
-		% Child: B_3
-		[B_3
-		% Child of B_3: B_0
-		[B_0]
-		% Child of B_3: B_1
-		[B_1 [B_0]]
-		% Child of B_3: B_2
-		[B_2
-		[B_0]
-		[B_1 [B_0]]
-		]
-		]
-		]
-	\end{forest}
-\end{center}
-
-One can find that there're $\binom{k}{i}$ nodes of depth $i$ in $B_k$, and the total number of nodes in $B_k$ is $\sum_{i=0}^k \binom{k}{i} = 2^k$ (that's why it's called a binomial tree.)
-Moreover, the subtree rooted at the $i$-th child of the root of $B_k$ is a $B_{i-1}$ tree.
-
-Now we collect multiple binomial trees into a binomial heap:
-
-\begin{definition}[Binomial Heap]
-	A binomial heap is a collection of heap-ordered binomial trees, where there is at most one binomial tree of any rank.
-\end{definition}
-
-In this data structure, insert and deletemin are easy to implement.
-
-For insert$(x,k)$, we
-\begin{itemize}
-	\item Create a new $B_0$ tree that contains a single node $x$ with key $k$.
-	\item Merge $H$ with the current binomial heap, if there are two trees of the same rank, we merge them into a tree of higher rank until there is at most one tree of any rank.
-\end{itemize}
-
-For deletemin, we
-\begin{itemize}
-	\item Find the tree $B_k$ with minimum root key, and remove the root $x$ from $B_k$.
-	\item Let $H'$ be the binomial heap formed by the children of $x$, we merge $H'$ with the current binomial heap, and link the trees of the same rank until there is at most one tree of any rank.
-\end{itemize}
-
-\begin{lemma}
-	insert and deletemin operations on a binomial heap with $n$ nodes take $O(\log n)$ time.
-\end{lemma}
-\begin{proof}
-	All sub-operations are $O(1)$, so the operation is dominated by the number of linkings.
-	As every linking reduces the number of trees by one, and there are at most $O(\log n)$ trees in a binomial heap with $n$ nodes, the number of linkings is at most $O(\log n)$.
 \end{proof}
 
-However this structure does not support decreasekey operation efficiently. To solve this problem, we introduce the Fibonacci heap, which is a more relaxed version of the binomial heap.
+\section{Max Flow-Min Cut Theorem}
 
-\begin{definition}[Fibonacci Heap]
-	A Fibonacci heap is a collection of heap-ordered trees, where there is no restriction on the number of trees of the same rank.
+To proof the correctness of the algorithm, we need to introduce the following definition:
+
+\begin{definition}[$s$-$t$ Cut]
+	$(A,B)$ is an \textbf{$s$-$t$ cut} if $A\cup B = V$, $A\cap B = \emptyset$, $s \in A$ and $t \in B$.
+
+	The capacity of the cut is defined as $c(A, B) = \sum_{(u, v) \in E, u \in A, v \in B} c(u, v)$. For any flow $f$, $v(f) \leq c(A, B)$.
 \end{definition}
 
-While the insert and deletemin operations are the same as in a binomial heap, the decreasekey operation is implemented as follows:
-
-\begin{itemize}
-	\item Let $x$ be the node whose key is decreased, and $y$ be the parent of $x$.
-	\item Cut the edge between $x$ and $y$, and make $x$ a new tree in the heap.
-	\item Mark $y$. If $y$ is already marked (i.e. it lost 2 children), we cut the edge between $y$ and its parent (and mark the parent as well), and make $y$ a new tree in the heap. We repeat this process until we reach a root or an unmarked node.
-\end{itemize}
-
-\begin{definition}
-	The rank of a tree (or the root of the tree) is $k$ if its root has $k$ children, or it has $k-1$ children and is marked.
-\end{definition}
-
-\begin{lemma}
-	The $i$-th child of a node with rank $k$ has rank at least $i-1$.
-\end{lemma}
-\begin{proof}
-	We prove by induction on $i$. For $i=1$, the claim is trivial. Assume the claim holds for $i-1$, we want to show that the $i$-th child of a node with rank $k$ has rank at least $i-1$.
-
-	When the $i$-th child is linked to the root, the root has at least $i-1$ children, so its rank is at least $i-1$. When a child is cut from its parent, the rank `requirement' of the other children will only be looser, so the $i$-th child will still have rank at least $i-1$.
-
-	In all, the lemma holds.
-\end{proof}
-
-Denote $T_k$ to be the minimum size of a tree with rank $k$, we have $T_0 = 1, T_1 = 2$, and $T_k \ge 1 + T_0 + T_1 + \cdots + T_{k-3} + T_{k-2}$ for $k\ge 2$ (as we can't guarantee whether that last child exists), which leads to $T_k \ge T_{k-1} + T_{k-2}$ for $k\ge 2$.
-
-One can find that $T_k$ is the Fibonacci sequence, so $T_k \ge F_k \ge \phi^{k+1}$, where $\phi = \frac{1+\sqrt{5}}{2}$ is the golden ratio. Therefore, we have:
-
-\begin{corollary}
-	The maximum rank of a tree in a Fibonacci heap with $n$ nodes is at most $O(\log n)$.
-\end{corollary}
-
-Now we are ready to analyze the time complexity of the operations on a Fibonacci heap.
-
-\begin{theorem}
-	The insert and decreasekey operations on a Fibonacci heap with $n$ nodes take $O(1)$ amortized time, and the deletemin operation takes $O(\log n)$ amortized time.
+\begin{theorem}[Max Flow-Min Cut Theorem]
+	The following statements are equivalent:
+	\begin{itemize}
+		\item $f$ is a maximum flow in $G$.
+		\item There is no path from $s$ to $t$ in the residual network $G_f$.
+		\item There exists an $s$-$t$ cut $(A, B)$ such that $v(f) = c(A, B)$.
+	\end{itemize}
 \end{theorem}
 \begin{proof}
-	We start by defining a potential function. Note that:
-	\begin{itemize}
-		\item Linking reduces the number of trees.
-		\item Cutting increases the number of trees, but decreases the number of marked nodes (or increase with an upper bound of 1).
-	\end{itemize}
-	Therefore, we can let the potential function be $\Phi = t + 2m$, where $t$ is the number of trees and $m$ is the number of marked nodes in the heap. The amortized cost of any operation is then $a_i = t_i + \Delta_i$, with $\Delta_i$ being the change of the potential function.
+	(1) $\Rightarrow$ (2): We prove the contrapositive. If there is a path from $s$ to $t$ in the residual network $G_f$, we can push more flow along this path, which contradicts the assumption that $f$ is a maximum flow.
 
-	Suppose the $i$-th operation is insert$(x,k)$, we create a new tree with $x$ as the root, then link the trees that have the same rank, so $t_i = \text{\# linkings} + 1$. On the other hand, each linking reduces the number of trees by one, so $\Delta_i = 1 - \text{\# linkings}$ (the 1 comes from the new tree), therefore, $a_i = t_i + \Delta_i = 2$.
+	(2) $\Rightarrow$ (3): Let $A = \{v \in V : v \text{ is reachable from } s \text{ in } G_f\}$ and $B = V\setminus A$. Then $(A, B)$ is an $s$-$t$ cut. Since there is no path from $s$ to $t$ in $G_f$, we have $t \in B$. For every edge $(u, v)$ with $u \in A$ and $v \in B$, we have $c_f(u, v) = 0$, which implies that $f(u, v) = c(u, v)$. Therefore, $v(f) = \sum_{(s, x) \in E} f(s, x) = \sum_{u\in A} \sum_{(u, x) \in E} f(u, x) =\sum_{(u, v) \in E, u \in A, v \in B} f(u, v) = \sum_{(u, v) \in E, u \in A, v \in B} c(u, v) = c(A, B)$.
 
-	Suppose the $i$-th operation is decreasekey$(x,k)$, we cut $x$ from its parent, then recursively cut the parents if they're marked, and link the trees with the same rank, so $t_i = \text{\# linkings} + \text{\# cuts}$. Let the number of cuts be $c$, then the number of trees increases by $c$ and then decreases by the number of linkings, and the number of marked nodes decreases by $c-2$ (increases if $c-2$ is negative.) This means $\Delta_i = \text{\# cuts} - \text{\# linkings} - 2(\text{\# cuts} - 2) = 4 - \text{\# linkings} - \text{\# cuts}$, therefore, $a_i = t_i + \Delta_i = 4$.
-
-	Suppose the $i$-th operation is deletemin, we find the tree with minimum root key, remove the root $x$ from the tree, and link the trees with the same rank. Let $k$ be the rank of the tree, then we have $t_i = O(k) + \text{\# linkings}$ (the $O(k)$ comes finding the minimum), and $\Delta_i = O(k) - \text{\# linkings}$, therefore, $a_i = t_i + \Delta_i = O(k) = O(\log n)$.
-
-	This completes the proof.
+	(3) $\Rightarrow$ (1): For any flow $f'$, we have $v(f') \leq c(A, B) = v(f)$, which implies that $f$ is a maximum flow.
 \end{proof}
 
+The efficiency of the Ford-Fulkerson algorithm is $O(m \cdot v(f))$, as it takes $O(m)$ time to find a path, and augmenting the flow along the path can increase the flow value by at least 1. However, if the capacities are irrational numbers, the algorithm may not terminate.
 
+To improve Ford-Fulkerson Algorithm, we can choose path greedily, so that the bottleneck edges are maximized.
 
+\begin{lemma}
+	Denote the next augmenting path as $p$, and let $\delta := v(f_{\max})-v(f)$ be the value of max flow in $G_f$. Then we have $v(f_p) \ge \delta/m$ if we maximize bottleneck edges.
+\end{lemma}
+\begin{proof}
+	Here we proof by contradiction. Assume that $v(f_p) < \delta/m$.
 
+	Then we can remove all edges with $c_f(e) < \delta/m$ from $G_f$, and expect $s$ and $t$ are unconnected.
 
+	The capacity of such cut is less than $m \cdot \delta/m = \delta \Rightarrow \contra$.
+\end{proof}
 
+Therefore, $v(f_p)\ge \delta/m = (v(f_{\max})-v(f))/m$.
+If we denote $\Delta_i := v(f_{\max})-v(f_i)$, where $f_i$ is the flow after the $i$-th iteration, we have $\Delta_{i+1} \leq \Delta_i - \frac{\Delta_i}{m} = \Delta_i (1 - \frac{1}{m})$. This implies that $\Delta_i \leq v(f_{\max})(1 - \frac{1}{m})^i < v(f_{\max}) e^{-i/m}$. To guarantee that $\Delta_i < 1$, $i = m \log v(f_{\max})$ suffices for integer-capacity graphs.
 
+It means that the number of iterations is at most $O(m \log v(f_{\max}))$, so the total time complexity is $O(m^2 \log v(f_{\max}))$.
 
+\section{Examples using Max Flow}
 
+\begin{question}[Max Matching in Bipartite Graph]
+	Given a bipartite graph $G = (V, E)$ with $V = L \cup R$, find the maximum matching in $G$.
+\end{question}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+One can use it to prove Hall's theorem:
+\begin{theorem}[Hall's Theorem]
+	If a bipartite graph $G = (L \cup R, E)$ does not have a perfect matching, then there exists a subset $S \subseteq V$ such that $|N(S)| < |S|$, where $N(S)$ is the set of neighbors of $S$ in $V$.
+\end{theorem}

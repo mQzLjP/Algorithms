@@ -28,9 +28,10 @@ The Dual LP, then, can be formulated as:
 
 To solve the LP, note that if we have a bipartite graph with some zero edges, we should try to find a perfect matching using only zero edges. If we can find such a perfect matching, then we are done.
 
-Then for a common case, we can reduce a bipartite graph to a easy case by picking a vertex $v$ and subtract some values from cost of all edges $(v,u)$.
+Then for a general case, we can reduce a bipartite graph to a easy case by picking a vertex $v$ and subtract $\Delta$ from cost of all edges $(v,u)$.
+This operation does not change which matchings are (sub)optimal, and it reduces the cost of \textbf{every} perfect matching by exactly $\Delta$.
 
-Let's try solve the Dual LP for a toy example:
+Let's try to solve the Dual LP for a toy example:
 Consider the complete bipartite graph \( K_{3,3} \) below, with edge costs shown:
 
 \begin{center}
@@ -62,7 +63,7 @@ Consider the complete bipartite graph \( K_{3,3} \) below, with edge costs shown
 	\end{tikzpicture}
 \end{center}
 
-Start with choosing some of the edges:
+Start with choosing some of the edges and find the minimum solution in the tight edges:
 
 \begin{center}
 	\begin{tikzpicture}[
@@ -77,19 +78,15 @@ Start with choosing some of the edges:
 		\node[vertex] (v3) at (5, 0)   {0};
 
 		\draw (u1) -- node[elabel, pos=0.2, above, sloped] {3} (v1);
-		\draw[ultra thick] (u1) -- node[elabel, pos=0.2, above, sloped] {0} (v2);
+		\draw[ultra thick,NavyBlue] (u1) -- node[elabel, pos=0.2, above, sloped] {0} (v2);
 		\draw (u1) -- node[elabel, pos=0.2, above, sloped] {4} (v3);
 		\draw (u2) -- node[elabel, pos=0.2, above, sloped] {6} (v1);
 		\draw (u2) -- node[elabel, pos=0.2, above, sloped] {3} (v2);
 		\draw[ultra thick] (u2) -- node[elabel, pos=0.2, above, sloped] {0} (v3);
 		\draw (u3) -- node[elabel, pos=0.2, above, sloped] {5} (v1);
 		\draw (u3) -- node[elabel, pos=0.2, above, sloped] {2} (v2);
-		\draw[ultra thick] (u3) -- node[elabel, pos=0.2, above, sloped] {0} (v3);
+		\draw[ultra thick,NavyBlue] (u3) -- node[elabel, pos=0.2, above, sloped] {0} (v3);
 
-		% Optimal matching edges
-		% \draw[ultra thick, NavyBlue] (u1) -- node[elabel, pos=0.5, above, sloped] {1} (v2);
-		% \draw[ultra thick, NavyBlue] (u2) -- node[elabel, pos=0.5, above, sloped] {2} (v1);
-		% \draw[ultra thick, NavyBlue] (u3) -- node[elabel, pos=0.5, above, sloped] {2} (v3);
 	\end{tikzpicture}
 \end{center}
 
@@ -108,18 +105,131 @@ Note that $v_1$ has no zero edge, we can pick $v_1$ and subtract 3 from all edge
 		\node[vertex] (v3) at (5, 0)   {0};
 
 		\draw[ultra thick] (u1) -- node[elabel, pos=0.2, above, sloped] {0} (v1);
-		\draw[ultra thick] (u1) -- node[elabel, pos=0.2, above, sloped] {0} (v2);
+		\draw[ultra thick,NavyBlue] (u1) -- node[elabel, pos=0.2, above, sloped] {0} (v2);
 		\draw (u1) -- node[elabel, pos=0.2, above, sloped] {4} (v3);
 		\draw (u2) -- node[elabel, pos=0.2, above, sloped] {3} (v1);
 		\draw (u2) -- node[elabel, pos=0.2, above, sloped] {3} (v2);
 		\draw[ultra thick] (u2) -- node[elabel, pos=0.2, above, sloped] {0} (v3);
 		\draw (u3) -- node[elabel, pos=0.2, above, sloped] {2} (v1);
 		\draw (u3) -- node[elabel, pos=0.2, above, sloped] {2} (v2);
+		\draw[ultra thick,NavyBlue] (u3) -- node[elabel, pos=0.2, above, sloped] {0} (v3);
+
+	\end{tikzpicture}
+
+\end{center}
+
+$u_2$ is still not matched, but it is already incident to a zero edge (meaning $y(u_2)$ can't be larger), so we need to relax the constraint by decreasing the $y$ value on the other side.
+Consequently, the original tight edge needs to be tightened again:
+
+
+\begin{center}
+	\begin{tikzpicture}[
+			vertex/.style={circle, draw, minimum size=0.75cm, inner sep=0pt},
+			elabel/.style={draw=none, fill=white, inner sep=1pt, font=\footnotesize},
+		]
+		\node[vertex] (u1) at (0, 4)   {8};
+		\node[vertex] (u2) at (0, 2)   {7};
+		\node[vertex] (u3) at (0, 0)   {6};
+		\node[vertex] (v1) at (5, 4)   {3};
+		\node[vertex] (v2) at (5, 2)   {0};
+		\node[vertex] (v3) at (5, 0)   {-2};
+
+		\draw[ultra thick] (u1) -- node[elabel, pos=0.2, above, sloped] {0} (v1);
+		\draw[ultra thick,NavyBlue] (u1) -- node[elabel, pos=0.2, above, sloped] {0} (v2);
+		\draw (u1) -- node[elabel, pos=0.2, above, sloped] {6} (v3);
+		\draw (u2) -- node[elabel, pos=0.2, above, sloped] {1} (v1);
+		\draw (u2) -- node[elabel, pos=0.2, above, sloped] {1} (v2);
+		\draw[ultra thick,NavyBlue] (u2) -- node[elabel, pos=0.2, above, sloped] {0} (v3);
+		\draw[ultra thick,NavyBlue] (u3) -- node[elabel, pos=0.2, above, sloped] {0} (v1);
+		\draw[ultra thick] (u3) -- node[elabel, pos=0.2, above, sloped] {0} (v2);
 		\draw[ultra thick] (u3) -- node[elabel, pos=0.2, above, sloped] {0} (v3);
 
-		% Optimal matching edges
-		% \draw[ultra thick, NavyBlue] (u1) -- node[elabel, pos=0.5, above, sloped] {1} (v2);
-		% \draw[ultra thick, NavyBlue] (u2) -- node[elabel, pos=0.5, above, sloped] {2} (v1);
-		% \draw[ultra thick, NavyBlue] (u3) -- node[elabel, pos=0.5, above, sloped] {2} (v3);
 	\end{tikzpicture}
+
 \end{center}
+
+Now we find a perfect matching only using zero edges. From the observation above, this is the min cost perfect matching in the original bipartite graph.
+
+From Complementary Slackness, we can see $x(u,v) > 0 \implies y(u) + y(v) = c(u,v)$, which means the optimal solution of the primal LP is supported on the tight edges of the dual LP.
+Therefore, such perfect matching can be found by finding augmenting paths in the tight edges of the dual LP.
+
+\section{Hungarian Algorithm}
+
+The Hungarian Algorithm consists of 2 main steps: finding an augmenting path in the tight edges, and performing dual adjustment to create more tight edges.
+
+\begin{algorithm}[H]
+	\caption{Hungarian Algorithm} \label{alg:hungarian}
+	$M \gets \emptyset$\;
+	$\forall u \in U, y(u) \gets \min_{(u,v)\in E} c(u,v)$\;
+	$E_= = \{ e \in E : y(u) + y(v) = c(e) \}$\;
+	\While{$|M|< |U|$}{
+	$U_0\gets$ vertices in $U$ not matched by $M$\;
+	$V_1 \gets$ vertices in $V$ reachable from $U_0$ in $E_= - M$\;
+	$U_1 \gets$ vertices in $U$ reachable from $V_1$ in $M$\;
+	$V_2 \gets$ vertices in $V$ reachable from $U_1$ in $E_= - M$\;
+	Repeat the process until a free vertex is found, or no more vertices can be added\;
+	\eIf{$\exists$ a free vertex $v$ in $V_1\cup V_2 \cup \cdots$}{
+		Find an augmenting path from $U_0$ to $v$\;
+		$M \gets M \cup P - M\cap P$\;
+	}{
+		$\Delta \gets \min_{u\in U_0\cup U_1\cup \cdots, v\notin V_1\cup V_2\cup \cdots} (c(u,v)-y(u)-y(v))$\;
+		$\forall u \in U_0\cup U_1\cup \cdots, y(u) \gets y(u) + \Delta$\;
+		$\forall v \in V_1\cup V_2\cup \cdots, y(v) \gets y(v) - \Delta$\;}
+	}
+\end{algorithm}
+\begin{theorem}
+	Algorithm~\ref{alg:hungarian} correctly finds a minimum cost perfect matching in \( O(mn^2) \) time.
+\end{theorem}
+\begin{proof}
+	The correctness of the algorithm follows from the observation from the previous section.
+
+	Every iteration of the while loop either finds an augmenting path, which increases the size of the matching by 1, or performs a dual adjustment that creates at least one new tight edge. The number of iterations is then at most \( O(n^2) \) since we can have at most \( n \) augmenting paths and at most \( n^2 \) dual adjustments before we find a perfect matching.
+
+	The iteration itself runs in the $O(m)$ time, as building the layer is essentially a BFS, and the dual adjustment can be done in $O(m)$ time by iterating through all edges.
+
+	Therefore, the overall time complexity of the algorithm is \( O(mn^2) \).
+\end{proof}
+
+\section{Speeding Up}
+
+Instead of setting $\Delta$ to be the minimum possible value over the whole graph, we can set it in a local way.
+
+Denote $\ell(u,v) = c(u,v) - y(u) - y(v)$. We can, in fact, compute the distance $d(v)$ from a source $s$ (that connects to $U_0$) to all other vertices in the graph with edge length $\ell(u,v)$.
+Then the new $y$ value can be computed as $y(u) \gets y(u) + d(u)$, and $y(v) \gets y(v) - d(v)$.
+
+One can easily verify that $\ell(u,v) = 0$ for tight edges.
+For tight edges $\ell(v',u')$ that point from $V$ to $U$, we have $d(u')\leq d(v') + \ell(v',u') = d(v')$. The new $y$ value then satisfies $y'(u') + y'(v') = (y(u') + d(u')) + (y(v') - d(v')) \leq y(u') + y(v')$, which means the new $y$ value is still a feasible solution to the dual LP.
+For tight edges $\ell(u',v')$ that point from $U$ to $V$, $d(u') = d(v')$, as only tight edges can be used to reach $v'$. The new $y$ value then satisfies $y'(u') + y'(v') = (y(u') + d(u')) + (y(v') - d(v')) = y(u') + y(v')$, which means the new $y$ value is still a feasible solution to the dual LP, and the edge is still tight.
+
+\begin{algorithm}[H]
+	\caption{Faster Hungarian Algorithm} \label{alg:hungarian-fast}
+	$M \gets \emptyset$\;
+	$\forall u \in U, y(u) \gets \min_{(u,v)\in E} c(u,v)$\;
+	$E_= = \{ e \in E : y(u) + y(v) = c(e) \}$\;
+	\While{$|M|< |U|$}{
+		$U_0\gets$ vertices in $U$ not matched by $M$\;
+		$V_1 \gets$ vertices in $V$ reachable from $U_0$ in $E_= - M$\;
+		$U_1 \gets$ vertices in $U$ reachable from $V_1$ in $M$\;
+		$V_2 \gets$ vertices in $V$ reachable from $U_1$ in $E_= - M$\;
+		Repeat the process until a free vertex is found, or no more vertices can be added\;
+		\eIf{$\exists$ a free vertex $v$ in $V_1\cup V_2 \cup \cdots$}{
+			Find an augmenting path from $U_0$ to $v$\;
+			$M \gets M \cup P - M\cap P$\;
+		}{
+			$\ell(u,v) \gets c(u,v) - y(u) - y(v)$\;
+			Connect $s$ to $U_0$ with zero length edges, and compute the distance $d(v)$ from $s$ to all $v\in U\cup V$ using Algorithm~\ref{alg:dijkstra} \;
+			$\forall u \in U, y(u) \gets y(u) + d(u)$\;
+			$\forall v \in V, y(v) \gets y(v) - d(v)$\;}
+	}
+\end{algorithm}
+\begin{theorem}
+	Algorithm~\ref{alg:hungarian-fast} correctly finds a minimum cost perfect matching in \( O(mn + n^2\log n) \) time.
+\end{theorem}
+\begin{proof}
+	The correctness of the algorithm follows from above.
+
+	The iteration itself runs in \( O(m + n \log n) \) time, as the dual adjustment can be done in \( O(m + n \log n) \) time by running Dijkstra's algorithm.
+
+	Therefore, the overall time complexity of the algorithm is \( O(mn + n^2\log n) \).
+\end{proof}
+

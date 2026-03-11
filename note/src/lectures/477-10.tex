@@ -32,7 +32,7 @@ Therefore, we can start with an empty $S$ and iteratively add the vertex that mi
 \end{itemize}
 
 \begin{algorithm}[H]
-	\caption{Dijkstra's Algorithm}
+	\caption{Dijkstra's Algorithm}\label{alg:dijkstra}
 	Initialize $S = \emptyset$ and $d(v) = \infty$ for all $v\in V\setminus \{s\}$, $d(s) = 0$\;
 	Insert all vertices into a set $Q$ with key $d(v)$\;
 	\While {$Q$ is not empty}{
@@ -52,6 +52,14 @@ The set $Q$ should be a priority queue that supports the following operations:
 
 If we maintain the priority queue with a binary heap, the time complexity is $O(m \log n)$. This is because insert, deletemin and decreasekey operations all take $O(\log n)$ time.
 However, here we present a new data structure that has amortized $O(1)$ time for insert and decreasekey, and $O(\log n)$ time for deletemin, that leads to a time complexity of $O(m + n \log n)$ for Dijkstra's algorithm.
+
+\begin{remark}[Solving APSP]
+
+	We can't speed up general SSSP with negative weight edges by using Dijkstra's algorithm with Fibonacci heap, as calculating price function is essentially running Bellman-Ford algorithm, which takes $O(mn)$ time.
+
+	However, for APSP, we can first calculate the price function $p$ in $O(mn)$ time, then reweight the edges and run Dijkstra's algorithm from each vertex, which takes $O(n(m + n \log n))$ time. Therefore, the total time complexity is $O(mn + n^2 \log n)$, which is better than $O(n^3)$.
+
+\end{remark}
 
 \section{Fibonacci Heap}
 
@@ -204,7 +212,6 @@ Now we are ready to analyze the time complexity of the operations on a Fibonacci
 
 	This completes the proof.
 \end{proof}
-
 
 
 

@@ -25,11 +25,11 @@ jobs:
           git pull origin main --rebase --force
 
       - name: Compile LaTeX
-        uses: xu-cheng/latex-action@v3
+        uses: xu-cheng/latex-action@v4
         with:
           working_directory: note/src
-          
           root_file: "main.tex"
+          latexmk_use_xelatex: true
           
 
       - name: Move PDF to note

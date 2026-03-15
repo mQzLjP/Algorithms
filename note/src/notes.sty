@@ -1,3 +1,4 @@
+\NeedsTeXFormat{LaTeX2e} % The recently updated LaTeX format
 \ProvidesPackage{notes}
 % basics
 \usepackage[utf8]{inputenc}
@@ -14,7 +15,25 @@
 \usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{cmbright}
 
-\usepackage{amsmath, amsfonts, mathtools, amsthm, amssymb, mathrsfs, nicematrix}
+%%%%% FONT SETTINGS
+\RequirePackage{amsmath}
+\RequirePackage{cmbright}
+\RequirePackage{fontspec}
+\setmonofont[Scale=.9]{CMU Typewriter Text}
+\setsansfont{cmunb}[        %CMU Bright for text
+	Extension=.otf,
+	UprightFont=*mr,
+	ItalicFont=*mo,
+	BoldFont=*bx, % semibold
+	BoldItalicFont=*so, % semibold oblique
+	NFSSFamily=cmbr
+]
+\setmainfont{CMU Bright}
+
+\RequirePackage{sansmathfonts}
+\RequirePackage[cm]{sfmath}
+
+\usepackage{amsmath, amsfonts, mathtools, amsthm, amssymb, mathrsfs, commath, nicematrix}
 \usepackage{geometry}
 \usepackage{cancel}
 \usepackage{stmaryrd}
@@ -24,6 +43,37 @@
 
 \usepackage{forest}
 
+% square bracket fix
+\DeclareSymbolFont{serifbrackets}{OT1}{cmr}{m}{n}
+\DeclareMathSymbol{(}{\mathopen}{serifbrackets}{`\(}
+\DeclareMathSymbol{)}{\mathclose}{serifbrackets}{`\)}
+\DeclareMathSymbol{[}{\mathopen}{serifbrackets}{`\[}
+\DeclareMathSymbol{]}{\mathclose}{serifbrackets}{`\]}
+
+% sans mathbb from Fourier
+\DeclareFontFamily{U}{futm}{} %%% taken from fourier.sty
+\DeclareFontShape{U}{futm}{m}{n}{
+	<-> s * [1] fourier-bb % but changing the magnification factor
+}{}
+\DeclareMathAlphabet{\mathbb}{U}{futm}{m}{n}
+
+% use thicker cmss for numbers
+\AtBeginDocument{
+	\DeclareSymbolFont{operators}{OT1}{cmss}{m}{n}
+	\SetSymbolFont{operators}{bold}{OT1}{cmss}{bx}{n}
+	% \DeclareMathSymbol{0}{\mathalpha}{operators}{`0}
+	% \DeclareMathSymbol{1}{\mathalpha}{operators}{`1}
+	% \DeclareMathSymbol{2}{\mathalpha}{operators}{`2}
+	% \DeclareMathSymbol{3}{\mathalpha}{operators}{`3}
+	% \DeclareMathSymbol{4}{\mathalpha}{operators}{`4}
+	% \DeclareMathSymbol{5}{\mathalpha}{operators}{`5}
+	% \DeclareMathSymbol{6}{\mathalpha}{operators}{`6}
+	% \DeclareMathSymbol{7}{\mathalpha}{operators}{`7}
+	% \DeclareMathSymbol{8}{\mathalpha}{operators}{`8}
+	% \DeclareMathSymbol{9}{\mathalpha}{operators}{`9}
+	% \DeclareMathSymbol{!}{\mathclose}{operators}{`!}
+	\renewcommand{\sim}{\mathrel{\raisebox{-0.7ex}{\sffamily\textasciitilde}}}
+}
 %% Math
 
 % quiver style
@@ -127,7 +177,7 @@
 % figure support
 \usepackage{import}
 \usepackage{xifthen}
-\pdfminorversion=7
+% \pdfminorversion=7
 \usepackage{pdfpages}
 \usepackage{transparent}
 \newcommand{\incfig}[2][\columnwidth]{%
@@ -506,7 +556,7 @@
 
 % Fix some stuff
 % %http://tex.stackexchange.com/questions/76273/multiple-pdfs-with-page-group-included-in-a-single-page-warning
-\pdfsuppresswarningpagegroup=1
+% \pdfsuppresswarningpagegroup=1
 
 % Appendix environment
 \usepackage{appendix}

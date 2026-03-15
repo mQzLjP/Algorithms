@@ -66,7 +66,7 @@ This gives a time complexity of $O(n^3)$, which is known as the Floyd-Warshall a
 
 For Dijkstra's algorithm to work, we need to guarantee that there're no negative weight edges in the graph, i.e. the weight function should now be $\ell: E \to \RR^+ \cup \{0\}$.
 
-\subsection{Getting Rid of Negative Weight Edges}
+\subsection{Getting Rid of Negative Weight Edges} \label{section:get-rid-negative-weight-edges}
 
 Can we construct a graph $G'$ with weights $\ell': E \to \mathbb{R}$ such that $\ell'(e) \geq 0$ for all $e \in E$ and the shortest path in $G'$ is the same as the shortest path in $G$? We can!
 

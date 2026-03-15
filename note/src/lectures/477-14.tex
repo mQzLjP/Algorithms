@@ -151,7 +151,7 @@ Consequently, the original tight edge needs to be tightened again:
 Now we find a perfect matching only using zero edges. From the observation above, this is the min cost perfect matching in the original bipartite graph.
 
 From Complementary Slackness, we can see $x(u,v) > 0 \implies y(u) + y(v) = c(u,v)$, which means the optimal solution of the primal LP is supported on the tight edges of the dual LP.
-Therefore, such perfect matching can be found by finding augmenting paths in the tight edges of the dual LP.
+Therefore, such perfect matching can be found by finding augmenting paths in the tight edges of the dual LP. Once we find an augmenting path that connects 2 unmatched vertices, we can alternatively set and unset the edges on the path to increase the size of the matching by 1.
 
 \section{Hungarian Algorithm}
 
@@ -195,7 +195,7 @@ The Hungarian Algorithm consists of 2 main steps: finding an augmenting path in 
 Instead of setting $\Delta$ to be the minimum possible value over the whole graph, we can set it in a local way.
 
 Denote $\ell(u,v) = c(u,v) - y(u) - y(v)$. We can, in fact, compute the distance $d(v)$ from a source $s$ (that connects to $U_0$) to all other vertices in the graph with edge length $\ell(u,v)$.
-Then the new $y$ value can be computed as $y(u) \gets y(u) + d(u)$, and $y(v) \gets y(v) - d(v)$.
+Then the new $y$ value can be computed as $y(u) \gets y(u) - d(u)$, and $y(v) \gets y(v) + d(v)$.
 
 One can easily verify that $\ell(u,v) = 0$ for tight edges.
 For tight edges $\ell(v',u')$ that point from $V$ to $U$, we have $d(u')\leq d(v') + \ell(v',u') = d(v')$. The new $y$ value then satisfies $y'(u') + y'(v') = (y(u') + d(u')) + (y(v') - d(v')) \leq y(u') + y(v')$, which means the new $y$ value is still a feasible solution to the dual LP.
@@ -218,8 +218,8 @@ For tight edges $\ell(u',v')$ that point from $U$ to $V$, $d(u') = d(v')$, as on
 		}{
 			$\ell(u,v) \gets c(u,v) - y(u) - y(v)$\;
 			Connect $s$ to $U_0$ with zero length edges, and compute the distance $d(v)$ from $s$ to all $v\in U\cup V$ using Algorithm~\ref{alg:dijkstra} \;
-			$\forall u \in U, y(u) \gets y(u) + d(u)$\;
-			$\forall v \in V, y(v) \gets y(v) - d(v)$\;}
+			$\forall u \in U, y(u) \gets y(u) - d(u)$\;
+			$\forall v \in V, y(v) \gets y(v) + d(v)$\;}
 	}
 \end{algorithm}
 \begin{theorem}

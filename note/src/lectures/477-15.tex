@@ -1,0 +1,268 @@
+\chapter{SSSP Revisit: Goldberg's Algorithm}
+
+In Section~\ref{section:get-rid-negative-weight-edges}, we proposed a price function by applying Bellman-Ford on the original graph. Combined with Dijkstra's Algorithm, we boost the efficiency of APSP. However, for SSSP, finding the price function itself becomes a bottleneck. In this section, we will introduce Goldberg's algorithm, which is a more efficient way to find the price function in some cases.
+
+Here we list the price function problem again with some extra parameters:
+\begin{question}[Price Function Problem]
+	Given a directed graph $G = (V, E, \ell)$ with edge weights $\ell: E\to \{-W, -W+1, \ldots, W\}$, find a price function $p: V\mapsto \mathbb{Z}$ such that for every edge $(u, v)\in E$, we have $\ell_p(u,v) = \ell(u,v) + p(u) - p(v) \geq 0$.
+\end{question}
+\begin{theorem}
+	Goldberg's algorithm can solve the price function problem in $O(m\sqrt{n}\log W)$ time.
+\end{theorem}
+
+\section{Bit Scaling}
+Suppose $\ell: E\to \{-50, -49,\ldots, 50\}$, we can write express the lengths in 6 bits. We can throw away the non-significant bits, one by one, and still get some sense on how large the lengths are.
+
+\begin{align*}
+	\ell^{(1)}(u,v) & = \lceil \ell(u,v)/2^5 \rceil, \\
+	\ell^{(2)}(u,v) & = \lceil \ell(u,v)/2^4 \rceil, \\
+	\vdots          &                                \\
+	\ell^{(6)}(u,v) & = \ell(u,v).
+\end{align*}
+
+\begin{note}
+	We round up the lengths to make sure we don't create negative cycles.
+\end{note}
+
+We observe that $\ell^{(1)}: E\to \{-1,0,1,2\}$.
+For such lengths, we can find a price function $p^{(1)}: V\to \mathbb{Z}$ so that all $\ell_{p^{(1)}}\ge 0$.
+
+Also, we note that $\ell^{(2)}(u,v) = 2\ell^{(1)}(u,v) - \{0,1\}$ approximately doubles $\ell^{(1)}$. If we double the price function as well, we have:
+\[ \ell^{(2)}_{2p^{(1)}}(u,v) = 2\ell^{(1)}(u,v) - \{0,1\} + 2p^{(1)}(u) - 2p^{(1)}(v) = 2\ell^{(1)}_{p^{(1)}}(u,v) - \{0,1\} \geq -1. \]
+
+Then we can use a same algorithm to find a price function $p^{(2)}: V\to \mathbb{Z}$ so that $\ell^{(2)}_{2p^{(1)} + p^{(2)}}\ge 0$.
+
+Therefore, if we have an algorithm to find a price function for lengths in $\{-1,0,1,2, \cdots\}$, we can apply it for $\log W$ times to find a price function for the original lengths.
+
+\section{Simple Case}
+
+Denote a vertex as $\textbf{negative}$ if it has at least one incoming edge with $\ell = -1$.
+
+To eliminate negative vertices, we intuitively decrease the price of these vertices by 1. We can't do it arbitrarily, though, as it will decrease the outgoing edges by 1 and may create new negative edges and vertices. We need to be careful about which vertices to decrease the price of.
+
+Suppose we decrement the price of all vertices in a set $S$ by 1, the edges inside $S$ will remain unchanged, the edges from $S$ to $V\setminus S$ will decrease by 1, and the edges from $V\setminus S$ to $S$ will increase by 1.
+
+\begin{center}
+	\begin{tikzpicture}[
+			vertex/.style={circle, draw, fill=white, minimum size=0.65cm, inner sep=0pt},
+			>=Stealth,
+		]
+		% S region (drawn first so nodes appear on top)
+		\fill[NavyBlue!10, rounded corners=10pt] (-3.2,-1.3) rectangle (1.5,1.3);
+		\draw[NavyBlue, dashed, thick, rounded corners=10pt] (-3.2,-1.3) rectangle (1.5,1.3);
+		\node[NavyBlue] at (-0.85, 1.7) {$S$};
+		% V\S region
+		\fill[RawSienna!10, rounded corners=10pt] (2.5,-1.3) rectangle (6.8,1.3);
+		\draw[RawSienna, dashed, thick, rounded corners=10pt] (2.5,-1.3) rectangle (6.8,1.3);
+		\node[RawSienna] at (4.65, 1.7) {$V\setminus S$};
+		% Vertices
+		\node[vertex] (a) at (-2.2, 0.4)  {};
+		\node[vertex] (b) at (0.5, 0.4)   {};
+		\node[vertex] (c) at (-1.0,-0.5)  {};
+		\node[vertex] (d) at (3.5, 0.4)   {};
+		\node[vertex] (e) at (5.8,-0.3)   {};
+		% Edges inside S (reduced lengths cancel: unchanged)
+		\draw[->] (a) -- node[above, font=\footnotesize] {unchanged} (b);
+		\draw[->] (a) -- (c);
+		% Edge inside V\S (unchanged)
+		\draw[->] (d) -- node[above, font=\footnotesize] {unchanged} (e);
+		% Edge S → V\S: reduced length by 1
+		\draw[->, NavyBlue, thick] (b) to[bend left=12]
+		node[above, font=\footnotesize, NavyBlue] {$\ell - 1$} (d);
+		% Edge V\S → S: increased length by 1
+		\draw[->, RawSienna, thick] (e) to[bend right=12]
+		node[below, font=\footnotesize, RawSienna] {$\ell + 1$} (c);
+	\end{tikzpicture}
+\end{center}
+
+Then starting from a negative vertex $v$, if we add all vertices reachable from $v$ using edges with weight $0$ or $-1$ to $S$, we end up with a safe set that won't create new negative vertices. We can repeat this process until there is no negative vertex left.
+
+As there are at most $n$ negative vertices, and building $S$ takes $O(m)$ time, this algorithm takes $O(mn)$ time.
+
+\section{Reduce in Batches}
+
+To boost the efficiency to $O(m\sqrt{n})$, we need to eliminate at least $\sqrt{k}$ negative vertices in linear time, assuming there are $k$ negative vertices in total.
+
+\begin{lemma}[Dilworth's Lemma]
+	Every partially ordered set contains a chain of size at least $\sqrt{n}$ or an anti-chain of size at least $\sqrt{n}$.
+\end{lemma}
+
+For a graph with edge weights in $\{-1, 0\}$ with no negative cycles, we can't guarantee it's a DAG, but one can observe that any cycle in this graph have to be a zero cycle, which we can contract into a single vertex. Therefore, we can treat the graph as a DAG and apply Dilworth's Lemma.
+
+\begin{remark}
+	Here we define anti-chains in a slightly different way: as long as their distances from the source are the same, we consider them as an anti-chain, even if there are edges between them. This is because they are only connected by zero edges, and they won't matter anyway.
+\end{remark}
+
+\begin{corollary}
+	After computing SSSP from an artificial source $s$, suppose there are $k$ negative vertices, then one of the following is true:
+	\begin{itemize}
+		\item $\exists v, \dist(s,v)\le -\lceil \sqrt{k}\rceil$.
+		\item $\exists d, |\{v:\dist(s,v) = d\}|\ge \lceil \sqrt{k}\rceil$.
+	\end{itemize}
+\end{corollary}
+
+\begin{note}
+	One can see that it takes $O(m)$ time to compute SSSP in DAG (as we have a topological order). Also we claim without proof that we can find chains and anti-chains in linear time as well.
+\end{note}
+
+The ``anti-chain'' case is easy, as we can follow a similar process as in the simple case and generate a set $S$ with at least $\lceil \sqrt{k} \rceil$ generators, and we can eliminate all of them in one linear scan.
+
+\begin{center}
+	\begin{tikzpicture}[
+			vertex/.style={circle, draw, fill=white, minimum size=0.65cm, inner sep=0pt, font=\small},
+			neg/.style={circle, draw, fill=RawSienna!25, minimum size=0.65cm, inner sep=0pt, font=\small},
+			>=Stealth,
+		]
+		% S region
+		\fill[NavyBlue!8, rounded corners=12pt] (-1.1,-3.8) rectangle (3.8,3.8);
+		\draw[NavyBlue, dashed, thick, rounded corners=12pt] (-1.1,-3.8) rectangle (3.8,3.8);
+		\node[NavyBlue] at (1.35, 4.2) {$S$};
+		% Anti-chain generators (no reachability between them)
+		\node[neg] (a1) at (0, 2.5) {$a_1$};
+		\node[neg] (a2) at (0, 0)   {$a_2$};
+		\node[neg] (a3) at (0,-2.5) {$a_3$};
+		% Vertices reachable from a1 via 0/-1 edges
+		\node[vertex] (r11) at (2.8, 3.1) {};
+		\node[vertex] (r12) at (2.8, 1.9) {};
+		\draw[->] (a1) -- (r11);
+		\draw[->] (a1) -- (r12);
+		\draw[->] (r11) -- (r12);
+		% Shared vertex reachable from both a2 and a3
+		\node[vertex] (rsh) at (2.8,-1.25) {};
+		% Vertices reachable from a2
+		\node[vertex] (r21) at (2.8, 0.5) {};
+		\draw[->] (a2) -- (r21);
+		\draw[->] (a2) -- (rsh);
+		% a3 also reaches the shared vertex
+		\draw[->] (a3) -- (rsh);
+		% Vertices reachable from a3 only
+		\node[vertex] (r31) at (2.8,-2.2) {};
+		\node[vertex] (r32) at (2.8,-3.1) {};
+		\draw[->] (a3) -- (r31);
+		\draw[->] (r31) -- (r32);
+		% Indicate no reachability between generators
+		\node[gray, font=\footnotesize] at (-2.5, 1.25) {no path};
+		\node[gray, font=\footnotesize] at (-2.5,-1.25) {no path};
+		\draw[gray, dashed] (-0.5, 1.25) -- (-1.7, 1.25);
+		\draw[gray, dashed] (-0.5,-1.25) -- (-1.7,-1.25);
+		% Anti-chain brace label
+		\node[font=\footnotesize] at (-3.8, 0) {anti-chain};
+		\draw[decorate, decoration={brace, amplitude=5pt}]
+		(-0.65,-2.95) -- (-0.65, 2.95) node[midway, left=6pt] {};
+	\end{tikzpicture}
+\end{center}
+
+For the ``chain'' case, we start with a chain with $t$ negative vertices $\{v_1,v_2,\cdots, v_t\}$, from lowest to highest, and their incoming neighbors $\{u_1,u_2,\cdots, u_t\}$ such that $\ell(u_i,v_i) = -1$ for all $i$.
+
+\begin{center}
+	\begin{tikzpicture}[
+			neg/.style={circle, draw, fill=RawSienna!25, minimum size=0.7cm, inner sep=0pt, font=\small},
+			inp/.style={circle, draw, fill=NavyBlue!15, minimum size=0.7cm, inner sep=0pt, font=\small},
+			>=Stealth,
+			lbl/.style={font=\footnotesize},
+		]
+		% Horizontal chain: u_3 ->(-1) v_3 ->(<=0) u_2 ->(-1) v_2 ->(<=0) u_1 ->(-1) v_1
+		% Left = highest dist(s,·), right = lowest dist(s,·)
+		\node[inp] (u3) at (0,   0) {$u_3$};
+		\node[neg] (v3) at (1.8, 0) {$v_3$};
+		\node[inp] (u2) at (3.6, 0) {$u_2$};
+		\node[neg] (v2) at (5.4, 0) {$v_2$};
+		\node[inp] (u1) at (7.2, 0) {$u_1$};
+		\node[neg] (v1) at (9.0, 0) {$v_1$};
+		\draw[->, RawSienna, thick] (u3) -- node[above, lbl, RawSienna] {$-1$} (v3);
+		\draw[->] (v3) -- node[above, lbl] {$\leq 0$} (u2);
+		\draw[->, RawSienna, thick] (u2) -- node[above, lbl, RawSienna] {$-1$} (v2);
+		\draw[->] (v2) -- node[above, lbl] {$\leq 0$} (u1);
+		\draw[->, RawSienna, thick] (u1) -- node[above, lbl, RawSienna] {$-1$} (v1);
+		% Increasing dist goes right to left
+		\draw[<-] (0.3,-1.0) -- (8.7,-1.0)
+		node[midway, below, lbl, gray] {increasing $\dist(s,\cdot)$};
+	\end{tikzpicture}
+\end{center}
+
+To avoid duplicate work, we should start with $v_1$ and build a small $S_1$ correspondingly. After decrementing $p$ values in $S_1$ by 1, we can see that when we build $S_2$ for $v_2$, we should not only consider the edges with weight $0$ or $-1$, but also the edges with weight $1$ that go from $S$ to $V\setminus S$, as they will become zero and may create new negative vertices. However we can guarantee that $S_1 \subset S_2$, as $v_1$ is reachable from $v_2$ using edges with weight $0$ or $-1$, and all vertices in $S_1$ are reachable from $v_1$ using edges with weight $0$ or $-1$. Therefore, we can build $S_2$ by starting from $S_1$ instead of starting from scratch. We can repeat this process until we build $S_t$ for $v_t$.
+
+More aggressively, we hope we can label vertices into $S_1, S_2, \cdots, S_t$ in one linear scan, so that we can change their prices in one shot.
+
+This labelling can be done using SSSP algorithms. Starting with an artificial source $s$, we connect $s$ with every $u_i$ with length $i$, and change the negative edges to zero edges. Then we can compute SSSP from $s$ and label the vertices according to their distances from $s$. We can see that all vertices in $S_i \backslash S_{i-1}$ will have distance $i$ from $s$, and all vertices in $S_t$ will have distance at most $t$ from $s$. Therefore, we can label the vertices in one linear scan of the SSSP result.
+
+\begin{center}
+	\begin{tikzpicture}[
+			vertex/.style={circle, draw, fill=white, minimum size=0.65cm, inner sep=0pt, font=\small},
+			neg/.style={circle, draw, fill=RawSienna!25, minimum size=0.65cm, inner sep=0pt, font=\small},
+			inp/.style={circle, draw, fill=NavyBlue!15, minimum size=0.65cm, inner sep=0pt, font=\small},
+			src/.style={circle, draw, fill=ForestGreen!25, minimum size=0.65cm, inner sep=0pt, font=\small},
+			>=Stealth,
+			lbl/.style={font=\footnotesize},
+		]
+		% Nested S regions: S_3 (outermost) > S_2 > S_1 (innermost, right-anchored)
+		% Each region extends 1.0 unit further down than the next, giving clear visual gaps
+		\fill[NavyBlue!5,  rounded corners=10pt] (0.0,-3.0) rectangle (10.2, 3.0);
+		\draw[NavyBlue!40, dashed, rounded corners=10pt] (0.0,-3.0) rectangle (10.2, 3.0);
+		\fill[NavyBlue!10, rounded corners=8pt]  (3.2,-2.0) rectangle (10.2, 2.0);
+		\draw[NavyBlue!70, dashed, rounded corners=8pt]  (3.2,-2.0) rectangle (10.2, 2.0);
+		\fill[NavyBlue!18, rounded corners=6pt]  (6.0,-1.0) rectangle (10.2, 1.0);
+		\draw[NavyBlue,    dashed, rounded corners=6pt]  (6.0,-1.0) rectangle (10.2, 1.0);
+		\node[NavyBlue!50, lbl] at (0.2, 2.7)  {$S_3$};
+		\node[NavyBlue!70, lbl] at (3.4, 1.7)  {$S_2$};
+		\node[NavyBlue,    lbl] at (6.2, 0.7)  {$S_1$};
+		% Source s (outside all S regions)
+		\node[src] (s) at (-2.0, 0) {$s$};
+		% Chain nodes, placed in their respective S-rings (all at y=0)
+		\node[inp] (u3) at (0.8, 0)  {$u_3$};
+		\node[neg] (v3) at (2.2, 0)  {$v_3$};
+		\node[inp] (u2) at (4.0, 0)  {$u_2$};
+		\node[neg] (v2) at (5.4, 0)  {$v_2$};
+		\node[inp] (u1) at (7.3, 0)  {$u_1$};
+		\node[neg] (v1) at (8.7, 0)  {$v_1$};
+		% Chain edges in G' (all weights 0; u_i->v_i were originally -1)
+		\draw[->, RawSienna, thick] (u3) -- node[above, lbl, RawSienna] {$0$} (v3);
+		\draw[->] (v3) -- node[above, lbl] {$0$} (u2);
+		\draw[->, RawSienna, thick] (u2) -- node[above, lbl, RawSienna] {$0$} (v2);
+		\draw[->] (v2) -- node[above, lbl] {$0$} (u1);
+		\draw[->, RawSienna, thick] (u1) -- node[above, lbl, RawSienna] {$0$} (v1);
+		% s -> u_i: artificial edges with lengths 3, 2, 1 (arcing above the chain)
+		\draw[->, ForestGreen, thick] (s) to[bend left=8]
+		node[above, lbl, sloped, ForestGreen] {$3$} (u3);
+		\draw[->, ForestGreen, thick] (s) to[bend left=18]
+		node[above, lbl, sloped, ForestGreen] {$2$} (u2);
+		\draw[->, ForestGreen, thick] (s) to[bend left=28]
+		node[above, lbl, sloped, ForestGreen] {$1$} (u1);
+		% Extra vertices below v_1: gaps are now 1.0 unit wide so nodes fit comfortably
+		% wa: y=-1.5, between S_1 bottom (-1.0) and S_2 bottom (-2.0) -> S_2\S_1
+		% wb: y=-2.5, between S_2 bottom (-2.0) and S_3 bottom (-3.0) -> S_3\S_2
+		\node[vertex] (wa) at (9.3,-1.5) {};
+		\node[vertex] (wb) at (7.8,-2.5) {};
+		\draw[->] (v1) -- node[right, lbl] {$1$} (wa);
+		\draw[->] (v1) -- node[right, lbl] {$2$} (wb);
+	\end{tikzpicture}
+\end{center}
+
+This gives the full Goldberg's algorithm, which runs in $O(m\sqrt{n}\log W)$ time:
+
+\begin{algorithm}[H]
+	\caption{Goldberg's Algorithm}
+	$\forall v\in V, p(v) \gets 0$\;
+	\For{$i = 1$ to $\log W$}{
+	$p' \gets 0$\;
+	$\ell^{(i)}(u,v) \gets \lceil \ell(u,v)/2^{\log W - i} \rceil + p(u) - p(v)$\;
+	$N \gets \{v: \exists u, \ell^{(i)}(u,v) = -1\}$\;
+	\While{$N\neq \emptyset$}{
+		$k \gets |N|$\;
+		Find a chain or an anti-chain of size at least $\lceil \sqrt{k} \rceil$\;
+		\eIf{we find an anti-chain $A$}{
+			$S \gets$ vertices reachable from $A$ using edges with weight $0$ or $-1$\;
+			$\forall v\in S, p'(v) \gets p'(v) - 1$\;
+		}{
+			Denote the chain as $\{v_1,v_2,\cdots, v_t\}$ from lowest to highest, and their incoming neighbors as $\{u_1,u_2,\cdots, u_t\}$ such that $\ell^{(i)}(u_i,v_i) = -1$ for all $i$\;
+			$G' \gets (V\cup \{s\}, E\cup \{(s,u_i): i\in [t]\}, \ell')$, where $\ell'(s,u_i) = i$ and $\ell'(u,v) = \max\{\ell^{(i)}(u,v), 0\}$\;
+			Compute SSSP from $s$ in $G'$\;
+			$\forall v\in V, p'(v) \gets p'(v) - (t + 1 - \dist(s,v))$\;
+		}
+		Update $N$ by checking the edges whose endpoints have been updated\;
+	}
+	$p \gets 2p + p'$\;
+	}
+	\Return $p$\;
+\end{algorithm}
+

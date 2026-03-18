@@ -1,0 +1,200 @@
+\chapter{APSP Revisit: Seidel's Algorithm}
+
+\section{Intro: Matrix Multiplication}
+
+\begin{question}[Matrix Multiplication]
+	Given two matrices $A, B\in \RR ^{n\times n}$, compute $C = AB$, where $C[i,j] = \sum_{k=1}^n A[i,k]B[k,j]$.
+\end{question}
+
+Using brute force, we can compute $C$ in $O(n^3)$ time.
+
+Consider the following divide-and-conquer approach: we can split $A$ and $B$ into four $n/2\times n/2$ submatrices each, and then compute the four $n/2\times n/2$ submatrices of $C$ using the following formulas:
+
+\begin{align*}
+	A       = \begin{pNiceMatrix}
+		          A_{11} & A_{12} \\
+		          A_{21} & A_{22}
+	          \end{pNiceMatrix}, \quad B & = \begin{pNiceMatrix}
+		                                         B_{11} & B_{12} \\
+		                                         B_{21} & B_{22}
+	                                         \end{pNiceMatrix}, \quad C = \begin{pNiceMatrix}
+		                                                                      C_{11} & C_{12} \\
+		                                                                      C_{21} & C_{22}
+	                                                                      \end{pNiceMatrix} \\
+	C_{11}                        & = A_{11}B_{11} + A_{12}B_{21}                            \\
+	C_{12}                        & = A_{11}B_{12} + A_{12}B_{22}                            \\
+	C_{21}                        & = A_{21}B_{11} + A_{22}B_{21}                            \\
+	C_{22}                        & = A_{21}B_{12} + A_{22}B_{22}
+\end{align*}
+
+The time complexity of this approach is $T(n) = 8T(n/2) + O(n^2) \implies T(n) = O(n^3)$. However, similar to Karatsuba's algorithm for integer multiplication, we can reduce the number of recursive calls to 7 by cleverly computing the following 7 products:
+
+\begin{align*}
+	P_1    & = (A_{11} + A_{22})(B_{11} + B_{22}) \\
+	P_2    & = (A_{21} + A_{22})B_{11}            \\
+	P_3    & = A_{11}(B_{12} - B_{22})            \\
+	P_4    & = A_{22}(B_{21} - B_{11})            \\
+	P_5    & = (A_{11} + A_{12})B_{22}            \\
+	P_6    & = (A_{21} - A_{11})(B_{11}+B_{12})   \\
+	P_7    & = (A_{12} - A_{22})(B_{21}+B_{22})   \\
+	C_{11} & = P_1 + P_4 - P_5 + P_7              \\
+	C_{12} & = P_3 + P_5                          \\
+	C_{21} & = P_2 + P_4                          \\
+	C_{22} & = P_1 - P_2 + P_3 + P_6
+\end{align*}
+
+This is called Strassen's algorithm, and it has a time complexity of $O(n^{\log_2 7}) \approx O(n^{2.81})$. Using some more modern algorithm we can achieve better efficiency, but we will not go into that in this course.
+
+\section{Path-doubling APSP in General}
+
+We can see the ordinary matrix multiplication as a $(+, \cdot)$ matrix product. We can also define a $(\min, +)$ matrix product, where the multiplication is replaced by addition and the addition is replaced by taking the minimum. Formally, given two matrices $A, B\in \RR ^{n\times n}$, we can compute $C = A \otimes B$, where $C[i,j] = \min_{k=1}^n (A[i,k] + B[k,j])$.
+
+For bipartite graphs $A, B$ with edges in one direction, if we represent the edge weights in matrices, then $A\otimes B$ is the shortest distance if we combine the two graphs.
+
+For an arbitrary graph $A$, $A\otimes A$ gives the shortest distance in $A$ that uses at most 2 edges, and $(A\otimes A)\otimes (A\otimes A)$ gives the shortest distance that uses at most 4 edges, and so on.
+
+If we have an algorithm that computes Matrix Multiplication in $M(n)$ time, then we can, intuitively, expect to compute the APSP in $O(M(n)\log n)$ time by using path-doubling.
+
+However, algorithm like Strassen's will fail in terms of the algebra, as we can't replace substraction with `inverse of $\min$', as $\min$ is not a ring operation.
+
+\section{Seidel's Algorithm}
+
+Let's restrict ourselves to unweighted, undirected graphs.
+
+\begin{question}[APSP for Unweighted, Undirected Graphs]
+	Given an unweighted, undirected graph $G = (V,E)$ with $n$ vertices, compute the shortest distance between every pair of vertices, as a matrix $D\in \{0,1,\ldots, n-1\}^{n\times n}$, where $D[i,j]$ is the shortest distance between vertex $i$ and vertex $j$.
+\end{question}
+
+We represent the graph $G$ as an adjacency matrix $A\in \{0,1\}^{n\times n}$, where
+\[ A[i,j] = \begin{cases}
+		1 & \text{if } (i,j)\in E, \\
+		0 & \text{otherwise}.
+	\end{cases} \]
+
+\subsection{Base Case: Diameter at Most 2}
+
+We can observe that $A^2[i,j]$ counts the number of paths of length 2 between vertex $i$ and vertex $j$. In particular, if $A^2[i,j] > 0$, then there is a path of length 2 between vertex $i$ and vertex $j$.
+
+Therefore, if we assume $G$ has diameter at most 2 (i.e. for any pair of vertices $i,j$, their distance is either $0$, $1$ or $2$), then we can compute the distance matrix $D$ as follows:
+
+\[ D[i,j] = \begin{cases}
+		0 & \text{if } i = j,       \\
+		1 & \text{if } A[i,j] = 1,  \\
+		2 & \text{if } A^2[i,j] > 0
+	\end{cases} \]
+
+This is our base case for the path-doubling approach.
+
+\subsection{Recursive Step}
+
+We can check if the diameter of $G$ is at most 2 by computing $A^2$.
+
+Let $Z=A^2$, and
+\[ B[i,j] = \begin{cases}
+		1 & \text{if } i \neq j \land (A[i,j] = 1 \lor Z[i,j] > 0), \\
+		0 & \text{otherwise}.
+	\end{cases} \]
+
+Then $B$ is the adjacency matrix of a graph $G'$ where there is an edge between vertex $i$ and vertex $j$ if and only if their distance in $G$ is at most 2. If $\forall i \neq j, B[i,j] = 1$, we can return $D = 2B-A$ (one can verify it easily).
+
+Otherwise, note that $G'$ generated by $B$ is in fact $G$ with extra edges that connect vertices with distance 2 in $G$. Therefore, $\text{diam}(G') = \lceil \text{diam}(G)/2 \rceil$. In particular, for any pair of vertices $i,j$, the distance between any two vertices in $G'$ is approximately half of their distance in $G$, as we can use the new edges to `shortcut' the paths in $G$. Therefore, we can recursively compute the distance matrix $T$ for $B$, and recover $D$ afterward.
+
+\begin{theorem}
+	If $A$ is undirected and unweighted graph,
+	\[ |\dist(i,j) - \dist(i,k)| \le 1, \quad \text{if } (j,k)\in E. \]
+\end{theorem}
+
+Following the theorem, $D[i,j]$ is either $2T[i,j] - 1$ or $2T[i,j]$. Now we name $D[i,j] = 2T[i,j]$ as the `even' case, and $D[i,j] = 2T[i,j] - 1$ as the `odd' case.
+
+For the even case, the shortest path will use all `new' edges in $G'$. Therefore, for any neighbor $k\in N(j)$, $T[i,k]\ge T[i,j]$.
+
+\begin{center}
+	\begin{tikzpicture}[
+			vertex/.style={circle, draw, fill=white, minimum size=0.65cm, inner sep=0pt, font=\small},
+		]
+		\node[vertex] (i)  at (0, 0)      {$i$};
+		\node[vertex] (a)  at (1, 0)      {$a$};
+		\node[vertex] (b)  at (2, 0)      {$b$};
+		\node[vertex] (c)  at (3, 0)      {$c$};
+		\node[vertex] (j)  at (4, 0)      {$j$};
+		\node[vertex] (k1) at (5.2, 0.7)  {$k_1$};
+		\node[vertex] (k2) at (5.2, -0.7) {$k_2$};
+		% Original G edges
+		\draw (i) -- (a) -- (b) -- (c) -- (j);
+		\draw (j) -- (k1);
+		\draw (j) -- (k2);
+		% New G' path edges i→b→j (dashed arcs)
+		\draw[NavyBlue, thick, dashed] (i) to[bend left=35] (b);
+		\draw[NavyBlue, thick, dashed] (b) to[bend left=35] (j);
+		% T-distance labels
+		\node[font=\scriptsize, below=5pt of j]  {$T[i,j]=2$};
+		\node[font=\scriptsize, right=3pt of k1] {$T[i,k_1]=3$};
+		\node[font=\scriptsize, right=3pt of k2] {$T[i,k_2]=3$};
+	\end{tikzpicture}
+\end{center}
+
+For the odd case, the shortest path will use at least one original edge in $G$. Therefore, for any neighbor $k\in N(j)$, $T[i,k]\le T[i,j]$. Moreover, there will be a predecessor $k\in N(j)$ such that $T[i,k] = T[i,j] - 1$.
+
+\begin{center}
+	\begin{tikzpicture}[
+			vertex/.style={circle, draw, fill=white, minimum size=0.65cm, inner sep=0pt, font=\small},
+		]
+		\node[vertex] (i)  at (0, 0)       {$i$};
+		\node[vertex] (a)  at (1, 0)       {$a$};
+		\node[vertex] (k1) at (2, 0)       {$k_1$};
+		\node[vertex] (j)  at (3, 0) {$j$};
+		\node[vertex] (k2) at (3.8, 0.85)       {$k_2$};
+		% Original G edges not on path
+		\draw (i) -- (a) -- (k1);
+		\draw (j) -- (k2);
+		% Original G edge k1-j on path (highlighted)
+		\draw[NavyBlue, thick] (k1) -- (j);
+		% New G' edge i-k1 on path (dashed)
+		\draw[NavyBlue, thick, dashed] (i) to[bend left=40] (k1);
+		% T-distance labels
+		\node[font=\scriptsize, below=5pt of k1] {$T[i,k_1]=1$};
+		\node[font=\scriptsize, right=3pt of j]  {$T[i,j]=2$};
+		\node[font=\scriptsize, above=5pt of k2] {$T[i,k_2]=2$};
+	\end{tikzpicture}
+\end{center}
+
+To distinguish the two cases, we have a clever way: we can compute the average distance of $j$'s neighbor. From the above analysis, we know this average will be no less than $T[i,j]$ in the even case, and less than $T[i,j]$ in the odd case. Therefore, we can use this average to determine whether we are in the even case or the odd case. Formally, after we turned average into addition:
+
+\[ D[i,j] = \begin{cases}
+		2T[i,j]   & \text{if } \sum_{k\in N(j)} T[i,k] \ge T[i,j]\cdot \deg(j), \\
+		2T[i,j]-1 & \text{otherwise}.
+	\end{cases} \]
+
+As $\sum_{k\in N(j)} T[i,k] = \sum_{k\in V} T[i,k]A[k,j]$, we can calculate this sum for the whole graph using Matrix Multiplication. Then we have the full algorithm:
+
+\begin{algorithm}[H]
+	\caption{Seidel's Algorithm for APSP}\label{alg:seidel}
+	$Z \gets A^2$\;
+	$B[i,j]\gets \begin{cases}
+			1 & \text{if } i \neq j \land (A[i,j] = 1 \lor Z[i,j] > 0), \\
+			0 & \text{otherwise}
+		\end{cases}$\;
+	\If{$\forall i \neq j, B[i,j] = 1$}{
+		\Return $D = 2B - A$\;
+	}
+	$T \gets \text{Seidel}(B)$\;
+	$X \gets TA$\;
+	$D[i,j] \gets \begin{cases}
+			2T[i,j]   & \text{if } X[i,j] \ge T[i,j]\cdot \deg(j), \\
+			2T[i,j]-1 & \text{otherwise}
+		\end{cases}$\;
+	\Return $D$\;
+\end{algorithm}
+
+\begin{theorem}
+	The time complexity of Algorithm~\ref{alg:seidel} is $O(M(n)\log n)$, where $M(n)$ is the time complexity of Matrix Multiplication.
+\end{theorem}
+
+\begin{proof}
+	Denote $R(n,k)$ as the time complexity of Algorithm~\ref{alg:seidel} when the diameter of the input graph is at most $2^k$. We have $R(n,1) = M(n)+n^2$, and $R(n,k) = R(n,k-1)+2M(n)+n^2$. Therefore,
+	\begin{align*}
+		R(n,k) & = R(n,1) + (k-1)(2M(n)+n^2) \\
+		       & = (2k-1)M(n) + kn^2         \\
+		       & = O(M(n)\log n).
+	\end{align*}
+\end{proof}

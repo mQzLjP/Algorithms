@@ -1,0 +1,235 @@
+\chapter{Max Cardinality Matching: Edmonds' Blossom Algorithm}
+
+\begin{question}
+	For a graph $G = (V, E)$, find a maximum set of edges $M\subseteq E$ such that no two edges in $M$ share a common vertex.
+\end{question}
+
+\section{Upper Bound of Matching}
+
+As mentioned in previous chapters, for a bipartite graph $G = (L \cup R, E)$, we can find a maximum matching by finding a maximum flow. We'll now show how to find a maximum matching for a general graph.
+
+Similar to Hungarian Algorithm, we start with an empty set, and add new edges to it by augmenting paths.
+
+\begin{definition}[Symmetric Difference]
+	For two sets $A$ and $B$, the \textbf{symmetric difference} of $A$ and $B$ is defined as
+	\[
+		A \oplus B = (A \setminus B) \cup (B \setminus A).
+	\]
+\end{definition}
+\begin{definition}[Augmenting Path]
+	Given a graph $G = (V, E)$ and a matching $M \subseteq E$, an \textbf{augmenting path} is a path in $G$ that:
+	\begin{itemize}
+		\item starts and ends at free vertices (vertices not covered by $M$),
+		\item alternates between edges in $M$ and $E\setminus M$.
+	\end{itemize}
+\end{definition}
+
+\begin{theorem}
+	$M$ is maximum if and only if there is no augmenting path with respect to $M$.
+\end{theorem}
+\begin{proof}
+	We prove the contrapositive: there is an augmenting path with respect to $M$ if and only if $M$ is not maximum.
+
+	($\Rightarrow$) Let $P$ be an augmenting path with respect to $M$. Then, we can construct a new matching $M' = M \oplus P$. Since $P$ starts and ends at free vertices, $|M'| = |M| + 1$, which means $M$ is not maximum.
+
+	($\Leftarrow$) Let $M'$ be a matching such that $|M'| > |M|$. Consider the symmetric difference $K = M \oplus M'$.
+	$K$ will consist of paths and cycles. Since $|M'| > |M|$, there must be at least one path that starts and ends at free vertices. This path will alternate between edges in $M$ and edges in $M'$, making it an augmenting path with respect to $M$.
+\end{proof}
+
+Now we know how to prove a matching is not maximum. To prove a matching is maximum, we have the following 2 theorems:
+
+\begin{theorem}[Hall's Theorem]
+	Let $G = (L\cup R, E)$ be a bipartite graph. Then, $\max |M| = \min_{S\subseteq L} (|L\setminus S| + |N(S)|)$, where $N(S)$ is the set of neighbors of $S$ in $R$.
+\end{theorem}
+The proof of Hall's Theorem can be done using Max Flow Min Cut Theorem. We omit the details here.
+
+\begin{theorem}[Tutte-Berge Formula]
+	Let $G = (V, E)$ be a graph. Then, $\max |M| = \min_{S\subseteq V} \frac{1}{2}(|V| - (o(G\setminus S)-|S|))$, where $o(G\setminus S)$ is the number of odd components in $G\setminus S$.
+\end{theorem}
+
+\begin{proof}
+	Assume removing $S$ turns $G$ into $k$ components.
+
+	In even-size components (denoting size to be $n_k$), the maximum matching we can have is a perfect matching, with size $n_k/2$.
+
+	In odd-size components, however, there will be at least one vertex that can't be matched inside the component. In all, we have at least $o(G-\setminus S)$ free vertices in $G\setminus S$.
+
+	These free vertices can only be matched with vertices in $S$. Since each vertex in $S$ can only match with one free vertex, we can only match at most $|S|$ free vertices. Therefore, there are at least $o(G\setminus S) - |S|$ free vertices that can't be matched, which means the maximum matching size is at most $\frac{1}{2}(|V| - (o(G\setminus S)-|S|))$.
+\end{proof}
+
+\section{Finding Augmenting Paths}
+
+We can't naively apply DFS to find augmenting paths, as all paths shouldn't self-intersect. Then if we are stopped at some cycles, we backtrack, but then we won't traverse any edge in this cycle in the rest of the search, which may cause us to miss some augmenting paths.
+
+The main issue here is the odd cycles. For even cycles, we won't get blocked as we can always alternate between matched and unmatched edges.
+
+\begin{definition}[Blossom]
+	An odd alternating cycle is called a \textbf{blossom}.
+
+	There exists 2 unmatched edges in the blossom that share a same vertex, and this vertex is called the \textbf{base} of the blossom.
+
+	The path from a free vertex to the base is called a \textbf{stem} of the blossom.
+
+	Denote $B$ as the blossom, then $G/B$ is the graph $G$ after contracting $B$ into a single vertex.
+\end{definition}
+
+\begin{center}
+	\begin{tikzpicture}[
+			vertex/.style={circle, draw, fill=white, minimum size=0.7cm, inner sep=0pt, font=\small},
+			matched/.style={line width=2.5pt, NavyBlue},
+		]
+		% Free vertex (stem start)
+		\node[vertex, draw=ForestGreen!80!black, fill=ForestGreen!10] (f) at (-3.8, 0) {$f$};
+		% Stem intermediate vertex
+		\node[vertex] (s) at (-2.2, 0) {$s$};
+		% Base of blossom
+		\node[vertex, draw=RawSienna!80!black, fill=RawSienna!15] (b) at (0, 0) {$b$};
+		% Blossom vertices (pentagon)
+		\node[vertex] (v1) at (-1.3, 1.5) {$v_1$};
+		\node[vertex] (v2) at (-0.75, 3.0) {$v_2$};
+		\node[vertex] (v3) at (0.75, 3.0) {$v_3$};
+		\node[vertex] (v4) at (1.3, 1.5) {$v_4$};
+
+		% Blossom boundary
+		\draw[gray!60, dashed, rounded corners=12pt]
+		(-0.45, -0.6) -- (-2.1, 0.8) -- (-1.5, 3.65) -- (1.5, 3.65) -- (2.1, 0.8) -- (0.45, -0.6) -- cycle;
+
+		% Even-path highlight: b -> v1 -> v2 (length 2)
+		\draw[ForestGreen!70!black, line width=5pt, opacity=0.22] (b) to[bend left=12] (v1);
+		\draw[ForestGreen!70!black, line width=5pt, opacity=0.22] (v1) -- (v2);
+		% Odd-path highlight: b -> v4 -> v3 -> v2 (length 3)
+		\draw[WildStrawberry, line width=5pt, opacity=0.22] (b) to[bend right=12] (v4);
+		\draw[WildStrawberry, line width=5pt, opacity=0.22] (v4) -- (v3);
+		\draw[WildStrawberry, line width=5pt, opacity=0.22] (v3) -- (v2);
+
+		% Stem edges
+		\draw (f) -- (s);                   % unmatched
+		\draw[matched] (s) -- (b);          % matched
+
+		% Blossom edges (alternating unmatched / matched around the cycle)
+		\draw (b) -- (v1);                  % unmatched
+		\draw[matched] (v1) -- (v2);        % matched
+		\draw (v2) -- (v3);                 % unmatched
+		\draw[matched] (v3) -- (v4);        % matched
+		\draw (b) -- (v4);                  % unmatched
+
+		% Annotations
+		\node[below=5pt of f, font=\scriptsize, ForestGreen!80!black] {free};
+		\node[below=6pt of b, font=\scriptsize, RawSienna!80!black] {base};
+		\node[above, font=\scriptsize] at (-1.8, 0.3) {stem};
+		\node[font=\scriptsize, gray!80!black] at (2.8, 3.55) {blossom $B$};
+
+		% Even / odd path labels
+		\node[font=\scriptsize, ForestGreen!70!black] at (-2.55, 2.0) {even ($\ell=2$)};
+		\node[font=\scriptsize, WildStrawberry] at (2.55, 2.0) {odd ($\ell=3$)};
+
+		% Matching legend (bottom right)
+		\begin{scope}[shift={(1.5, -1.1)}]
+			\draw[matched] (0,0) -- (0.8,0)
+			node[right, font=\scriptsize, black] {matched};
+			\draw (0,-0.4) -- (0.8,-0.4)
+			node[right, font=\scriptsize, black] {unmatched};
+		\end{scope}
+	\end{tikzpicture}
+\end{center}
+
+We have a very nice and obvious property here: from the base to any other vertex in the blossom, we always have an odd alternating path and an even alternating path.
+
+Therefore, we can contract the blossom into a single vertex, and then find an augmenting path in the contracted graph.
+
+\begin{theorem}
+	Let $B$ be a blossom in $G$.
+
+	If there's an augmenting path w.r.t. $M$, $G$, then there's an augmenting path w.r.t. $M/B$, $G/B$.
+\end{theorem}
+We give some hand-waving proof here.
+Denote $S$ as the stem of the blossom.
+Assume $M$ is not maximum, then we can find an augmenting path $P$.
+
+Then $M' = M\oplus S$ is also a valid matching with a same size. After the flip, every edge that has one endpoint in $B$ and another in the rest of the graph will be unmatched.
+As $|M'| = |M|$, we can also find an augmenting path $P'$ w.r.t. $M'$ and $G$, and this path will remain an augmenting path w.r.t. $M/B$ and $G/B$.
+
+\section{Constructing the Algorithm}
+
+We'll start with an empty $M$, and then keep finding augmenting paths until there's no free vertices or we find a set $S$ that $|M| = \frac{1}{2}(|V| - (o(G\setminus S)-|S|))$.
+
+In DFS, we define 3 labels for vertices:
+\begin{itemize}
+	\item \textbf{Outer}: vertices that are reachable from free vertices by an even alternating path.
+	\item \textbf{Inner}: vertices that are reachable from free vertices by an odd alternating path, but by no even alternating path.
+	\item \textbf{Unlabeled}: vertices that are unvisited.
+\end{itemize}
+
+We can claim that an augmenting path must be in the form of $(B_0, v_1, B_1, v_2, B_2, \dots, v_k, B_k)$, where $B_i$ is a blossom or vertex, and $v_i$ is an inner vertex.
+
+Then we can find an augmenting path by DFS. Assume we have a path $P = (B_0, v_1, B_1, v_2, B_2, \dots, v_k, B_k)$, for the next unscanned edge $(x,y)$ where $x\in B_k$ and $y\not\in B_k$, we have four cases:
+\begin{itemize}
+	\item If $y$ is a free vertex and unlabeled (in case we go back to $B_0$), we append $y$ to $P$ and return $P$ as an augmenting path.
+	\item If $y$ is unlabeled and matched with $z$, we append $y$ and $z$ to $P$, and label $y$ as inner and $z$ as outer.
+	\item If $y$ is inner, we ignore this edge, as it won't bring any new information (we have already been there before).
+	\item If $y$ is outer, we find a new blossom! $y$ must be in $B_j$ for some $j$ in the path. We set all $v_i$ for $i > j$ as outer, pop the subpath $(B_j, v_{j+1}, B_{j+1}, \dots, v_k, B_k)$ off $P$, contract it as a new blossom $B^*$ and push $B^*$ to the end of $P$.
+\end{itemize}
+
+If we fail to find a new edge to expand $P$, we pop $(v_k, B_k)$ off $P$.
+
+To stop searching, we hope we can find a set $S$ as fast as we can.
+
+\begin{theorem}
+	For a maximum matching, the set of all inner vertices is a proper set $S$ that $|M| = \frac{1}{2}(|V| - (o(G\setminus S)-|S|))$.
+\end{theorem}
+\begin{proof}
+	Let $F$ be the free vertices in $G/(B_0\cup B_1\cup \dots \cup B_k)$, and $S$ be the set of inner vertices.
+
+	We claim there are no $(\text{outer}, \text{outer})$ edges, as otherwise we would contract them into a new blossom. Therefore, $G\setminus S$ is simply collections of outer vertices and free vertices, and there are no edges between them.
+
+	Then we also claim $|F| + |S| = o(G\setminus S)$, as each inner vertex in $S$ is matched with a distinct outer blossom / vertex, and each free vertex is in a different component.
+
+	Therefore, we have $\frac{1}{2}(|V| - (o(G\setminus S)-|S|)) = \frac{1}{2}(|V| - (|S| + |F| - |S|)) = \frac{1}{2}(|V| - |F|) = |M|$.
+\end{proof}
+
+Here we give the full algorithm:
+
+\begin{algorithm}[H]
+	\caption{Edmonds' Blossom Algorithm}
+	\While{there's a free vertex $u$}{
+	$P \gets \text{DFS}(u)$\;
+	$M \gets M \oplus P$\;
+	$S \gets$ the set of inner vertices in DFS\;
+	\If{$|M| = \frac{1}{2}(|V| - (o(G\setminus S)-|S|))$}{
+			Break\;
+		}
+	}
+	\Return $M$\;
+\end{algorithm}
+
+\begin{algorithm}[H]
+	\caption{DFS for finding augmenting paths}
+	\KwIn{$u$}
+	$P \gets (u)$\;
+	\While{$P = (B_0, v_1, B_1, v_2, B_2, \dots, v_k, B_k)$ is not empty}{
+		\If{there's an unscanned edge $(x,y)$ where $x\in B_k$ and $y\not\in B_k$}{
+			\If{$y$ is a free vertex and unlabeled}{
+				\Return $P \cdot y$\;
+			}
+			\ElseIf{$y$ is unlabeled and $\exists z, (y,z)\in M$}{
+				Label $y$ as inner and $z$ as outer\;
+				$P \gets P \cdot (y,z)$\;
+			}
+			\ElseIf{$y$ is inner}{
+				Continue\;
+			}
+			\ElseIf{$y$ is outer}{
+				Denote $B_j \ni y$\;
+				label all $v_i$ for $i > j$ as outer\;
+				pop the subpath $(B_j, v_{j+1}, B_{j+1}, \dots, v_k, B_k)$ off $P$\;
+				contract the subpath as a new blossom $B^*$ and push $B^*$ to the end of $P$\;
+			}
+		}
+		else{
+				pop $(v_k, B_k)$ off $P$\;
+			}
+	}
+	return $P$\;
+\end{algorithm}
+
+

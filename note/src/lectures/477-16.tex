@@ -47,6 +47,8 @@ This is called Strassen's algorithm, and it has a time complexity of $O(n^{\log_
 
 \section{Path-doubling APSP in General}
 
+For sparse graphs ($m \ll n^2$), we tend to represent them as adjacency lists, but for dense graphs ($m\approx n^2$), we can represent them as adjacency matrices. For these graphs, we might want to do better than $O(mn) = O(n^3)$ APSP, so using adjacency matrices and matrix multiplication might be a good idea.
+
 We can see the ordinary matrix multiplication as a $(+, \cdot)$ matrix product. We can also define a $(\min, +)$ matrix product, where the multiplication is replaced by addition and the addition is replaced by taking the minimum. Formally, given two matrices $A, B\in \RR ^{n\times n}$, we can compute $C = A \otimes B$, where $C[i,j] = \min_{k=1}^n (A[i,k] + B[k,j])$.
 
 For bipartite graphs $A, B$ with edges in one direction, if we represent the edge weights in matrices, then $A\otimes B$ is the shortest distance if we combine the two graphs.

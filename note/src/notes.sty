@@ -16,22 +16,14 @@
 \usepackage{cmbright}
 
 %%%%% FONT SETTINGS
-\RequirePackage{amsmath}
-\RequirePackage{cmbright}
-\RequirePackage{fontspec}
-\setmonofont[Scale=.9]{CMU Typewriter Text}
-\setsansfont{cmunb}[        %CMU Bright for text
-	Extension=.otf,
-	UprightFont=*mr,
-	ItalicFont=*mo,
-	BoldFont=*bx, % semibold
-	BoldItalicFont=*so, % semibold oblique
-	NFSSFamily=cmbr
-]
-\setmainfont{CMU Bright}
 
-\RequirePackage{sansmathfonts}
-\RequirePackage[cm]{sfmath}
+\usepackage{cmbright}
+\usepackage{sansmathfonts}
+\usepackage[T1]{fontenc}
+\renewcommand*\familydefault{\sfdefault} %% Only if the base font of the document is to be sans serif
+\renewcommand{\rmdefault}{cmbr}   % CM Bright as roman (it's actually sans)
+\renewcommand{\sfdefault}{cmbr}
+\renewcommand{\familydefault}{\sfdefault}
 
 \usepackage{amsmath, amsfonts, mathtools, amsthm, amssymb, mathrsfs, commath, nicematrix}
 \usepackage{geometry}

@@ -1,0 +1,154 @@
+\chapter{Union Find}
+
+In the previous chapter, when we are finding augmenting paths with blossoms, we need to contract singletons and small blossoms into larger blossoms.
+
+Therefore, we need to maintain a data structure that can support the following operations, with $\mathcal P$ initialized as $\left\{ \{1\}, \{2\}, \ldots, \{n\} \right\}$, and every set has a representative $\text{rep}(A)\in A$ for $A \in \mathcal P$:
+\begin{itemize}
+	\item $\text{find}(x)$: return $\text{rep}(A)$ where $x\in A\in \mathcal P$.
+	\item $\text{union}(x,y,r)$: merge the sets $A$ and $B$ where $x\in A$ and $y\in B$, and set $\text{rep}(A\cup B)=r$.
+\end{itemize}
+
+Such data structure is called \textbf{union find}. It can be applied when finding a BST as well.
+
+\section{Kruskal's Algorithm Revisited}
+
+Here we assume the edge weights are distinct for simplicity (one can break ties arbitrarily). The algorithm is as follows:
+
+\begin{algorithm}[H]
+	$T\gets \emptyset$\;
+	Sort $E$ in non-decreasing order of $w(e)$\;
+	\ForEach{$e\in E$}{
+		\If{$T\cup \{e\}$ is acyclic}{
+			$T\gets T\cup \{e\}$\;
+		}
+	}
+	\Return $T$\;
+	\caption{Kruskal's Algorithm}
+\end{algorithm}
+
+The algorithm is correct because the following property holds:
+\begin{theorem}
+	For any MST:
+	\begin{itemize}
+		\item \textbf{Cycle Property}: The heaviest edge in any cycle does not belong to the MST.
+		\item \textbf{Cut Property}: The lightest edge crossing any cut $(V', V\setminus V')$ belongs to the MST.
+	\end{itemize}
+\end{theorem}
+\begin{proof}
+	We only prove the cycle property, and the cut property can be proved similarly. Assume for the sake of contradiction that there is a cycle $C$ in the MST, and let $e$ be the heaviest edge in $C$. Then we can remove $e$ from the MST, and add any other edge in $C$ to get a spanning tree with smaller weight, which is a contradiction.
+\end{proof}
+
+The rest of the correctness is covered in EECS 376 (and even in some EECS 281).
+
+We'll go back to more MST algorithms in later chapters, but now we focus on how to implement Kruskal's Algorithm efficiently. To judge whether $S\cup \{e\}$ is acyclic, we can maintain the connected components of $S$ using union find. Initially, each vertex is in its own component. When we consider an edge $e=(u,v)$, we check if $\text{find}(u)=\text{find}(v)$. If they are in the same component, then adding $e$ would create a cycle, so we skip it. Otherwise, we add $e$ to $S$ and merge the two components using $\text{union}(u,v,r)$ for some representative $r$.
+
+\section{Implementation of Union Find}
+
+The implement of Galler-Fischer Union-Find Algorithm is easy. Each element keeps a \textbf{parent pointer} and a \textbf{rank}. Consider each set $A\in \mathcal P$ is a rooted tree, where the root has a pointer to $\text{rep}(A)$. Initially, $\rank(v) = 0$ and $\text{parent}(v) = \text{NULL}$ for all $v$.
+
+Then, when we take the union of two elements, we find their roots, and link the root of one tree to the root of the other tree. We follow the following Rank Rule: whenever two roots of the same rank are linked, the winner's rank is incremented. The node with smaller rank is made a child of the node of the higher rank.
+
+From the implementation, we observe the lemma (one can easily prove it so we omit the proof):
+\begin{lemma}
+	A rank $k$ node has at least $2^k$ nodes in its subtree. \label{lemma:rank}
+\end{lemma}
+\begin{corollary}
+	The maximum rank of any node is at most $\log n$.
+\end{corollary}
+\begin{theorem}
+	For $n-1$ unions and $m$ finds, the time complexity is $O((m+n)\log n)$.
+\end{theorem}
+
+We can speed up this algorithm. For example, if $\text{find}(x_0)$ traverses $(x_0, x_1, x_2, x_3, x_4, x_5, x_6)$, we can change the parent pointer of $x_0, x_1, x_2, x_3, x_4, x_5$ to point to $x_6$ to save time for future finds. This is called \textbf{path compression}.
+
+\section{Time Analysis}
+
+The time complexity of Union Find with Path Compression is very complicated to analysis compared to the implementation.
+
+Imagine doing all the Unions first, then doing all the path compressions on the tree. Define a \textbf{normal compression} with $\cost = \text{number of edges on the path}$, and \textbf{root compression} that makes all nodes new roots with $\cost = 0$.
+
+Then we only need to analyze $T(m,n,r)$, the maximum cost of $m$ normal path compressions (and any number of root compressions) on an $n$-node forest with rank at most $r$.
+
+\begin{lemma}[First Lemma]
+	\[ T(m,n,r) \leq m + (r-1)n .\]\label{lemma:first}
+\end{lemma}
+\begin{proof}
+	The cost of the first path compression for every vertex is at most $r$. After the first compression, the cost of subsequent path compressions for that vertex is $1$. Therefore, the total cost of path compressions is at most $m - n + rn = m+(r-1)n$.
+\end{proof}
+
+\begin{lemma}[Key Lemma]
+	For all $m = m_b+m_t$ and $s < r$,
+	\[ T(m,n,r) \leq T(m_b, n, s) + T(m_t, \frac{n}{2^{s+1}}, r-s-1) + n + m_t .\]\label{lemma:key}
+\end{lemma}
+\begin{proof}
+	Consider splitting the forest into two parts: the top with ranks $> s$, and the bottom with ranks $\leq s$. Assume we classify $m$ path compressions into $m_b$ paths that terminate in the bottom, and $m_t$ paths that terminate in the top.
+
+	The bottom has at most $n$ nodes. As every node in the top has rank at least $s+1$, according to Lemma~\ref{lemma:rank}, if we distribute nodes in the tree to nodes in the top, every node in the top can hold at least $2^{s+1}$ distinct nodes in the tree. Therefore, the top has at most $\frac{n}{2^{s+1}}$ nodes.
+
+	Therefore, the path compressions that terminate in the bottom can be covered by $T(m_b, n, s)$. For path compressions that terminate in the top, we split them into three segments:
+	\begin{itemize}
+		\item The segment in the top tree is covered by $T(m_t, \frac{n}{2^{s+1}}, r-s-1)$.
+		\item Edges crossing the cut is covered by $m_t$ term, as every path compression that terminates in the top may cross the cut at most once.
+		\item Other edges in the bottom is covered by $n$ term. We can think of the path compression in this segment as first doing a root compression in the bottom, then linking the root to the top. The cost of root compression is $0$, and the cost of linking is at most $n$, as every node in the bottom can be linked at most once.
+	\end{itemize}
+	Combining the three segments, we get the total cost of path compressions that terminate in the top is at most $T(m_t, \frac{n}{2^{s+1}}, r-s-1) + n + m_t$, which proves the lemma.
+\end{proof}
+
+Consider picking $s = \log r$. Then combining Lemma~\ref{lemma:first} and Lemma~\ref{lemma:key}, we have
+\begin{align*}
+	T(m,n,r) & \leq T(m_b, n, \log r) + T(m_t, \frac{n}{2r}, r-\log r - 1) + n + m_t \\
+	         & \leq m_b + (\log r - 1)n + m_t + (r-\log r - 2)\frac{n}{2r} + n + m_t \\
+	         & < 2m+n\log r
+\end{align*}
+
+Then we can recursively apply the result to Lemma~\ref{lemma:key}:
+
+\begin{lemma}[Claim 1]
+	\[ T(m,n,r) \leq 2m + 2n\log^* r .\]\label{lemma:claim1}
+\end{lemma}
+\begin{proof}
+	Pick $s = \log r$.
+	In Lemma~\ref{lemma:key}, we can apply the claim inductively to the first term, and apply First Lemma to the second term:
+	\begin{align*}
+		T(m,n,r) & \leq T(m_b, n, \log r) + T(m_t, \frac{n}{2r}, r-\log r - 1) + n + m_t \\
+		         & \leq 2m_b + 2n\log^* (\log r) + m_t + \frac{n}{2} + n + m_t           \\
+		         & < 2m + 2n\log^* r
+	\end{align*}
+\end{proof}
+
+$\log^*(\log r) = \log^* r - 1$ is used in the proof, which can be easily verified by the definition of $\log^*$. Similarly, we have $\log^{t\times *}(\log^{(t-1)\times *}(x)) = \log^{t\times *}(x) - 1$, where $\log^{t\times *}$ is the $t$-times iterated $\log^*$ function.
+
+\begin{lemma}[Claim 2]
+	\[ T(m,n,r) \leq 3m + 2n\log^{**} r.\]\label{lemma:claim2}
+\end{lemma}
+\begin{proof}
+	Pick $s = \log^* r$. Apply Claim 2 inductively to the first term in Lemma~\ref{lemma:key}, and apply Claim 1 to the second term:
+	\begin{align*}
+		T(m,n,r) & \leq T(m_b, n, \log^* r) + T(m_t, \frac{n}{2^{\log^* r + 1}}, r-\log^* r - 1) + n + m_t \\
+		         & \leq 3m_b + 2n\log^{**} (\log^* r) + 2m_t + \frac{n}{2} + n + m_t                       \\
+		         & \leq 3m + 2n\log^{**} r
+	\end{align*}
+\end{proof}
+
+We can see these claims are showing some patterns:
+
+\begin{lemma}[Claim $t$]
+	\[ T(m,n,r) \leq (t+1)m + 2n\log^{t\times *} r.\]\label{lemma:claimt}
+\end{lemma}
+\begin{proof}
+	Pick $s = \log^{(t-1)\times *} r$. Apply Claim $t$ inductively to the first term in Lemma~\ref{lemma:key}, and apply Claim $t-1$ to the second term:
+	\begin{align*}
+		T(m,n,r) & \leq T(m_b, n, \log^{(t-1)\times *} r) + T(m_t, \frac{n}{2^{\log^{(t-1)\times *} r + 1}}, r-\log^{(t-1)\times *} r - 1) + n + m_t \\
+		         & \leq (t+1)m_b + 2n\log^{t\times *} (\log^{(t-1)\times *} r) + tm_t + \frac{n}{2} + n + m_t                                        \\
+		         & \leq (t+1)m + 2n\log^{t\times *} r
+	\end{align*}
+\end{proof}
+
+The right hand side of the inequality keeps decreasing, until the $\log^{t\times *}r$ term is no longer dominant. Define a function $\alpha(m,n) := \min\{ t : \log^{t\times *} (\log n) \leq \frac{m+n}{n} \}$. It's called the \textbf{inverse-Ackermann function}, and it grows very slowly.
+
+Then, we have $(\alpha + 1)m + 2n\log^{\alpha\times *} r \leq (\alpha + 1)m + 2(m+n)$.
+
+\begin{theorem}
+	The time complexity of Union Find with Path Compression is $O(m\alpha(m,n) + n)$.
+\end{theorem}
+

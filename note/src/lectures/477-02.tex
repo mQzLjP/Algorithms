@@ -1,15 +1,15 @@
 \chapter {Explore and Exploit}
 
-\begin{question}[Secretary Problem]
-  An interviewer interviews $T$ candidates in a random order for a secretary position. After interviewing each candidate, the interviewer must decide immediately whether to hire that candidate or not (if hired, the process ends).
+\begin{problem}[Secretary Problem]
+An interviewer interviews $T$ candidates in a random order for a secretary position. After interviewing each candidate, the interviewer must decide immediately whether to hire that candidate or not (if hired, the process ends).
 
-  The interviewer can compare the relative ranks of the candidates interviewed so far, but does not know the absolute ranks of the candidates. The goal is to maximize the probability of hiring the best candidate (finding the second best is not interesting for us).
-\end{question}
+The interviewer can compare the relative ranks of the candidates interviewed so far, but does not know the absolute ranks of the candidates. The goal is to maximize the probability of hiring the best candidate (finding the second best is not interesting for us).
+\end{problem}
 
 A naive strategy is to just hire candidate $i$. Then $\Pr[\text{hiring best candidate}] = \frac{1}{T}$. This is clearly not good enough.
 
 \begin{remark}
-  We can observe that it only makes sense to hire a candidate if it is the best one among all candidates interviewed so far. If not, hiring it would never lead to the best candidate overall.
+	We can observe that it only makes sense to hire a candidate if it is the best one among all candidates interviewed so far. If not, hiring it would never lead to the best candidate overall.
 \end{remark}
 
 Therefore, we can consider hiring the first \textit{best-so-far} candidate after candidate $i$, and decide $i$ with respect to $T$.
@@ -17,80 +17,80 @@ Therefore, we can consider hiring the first \textit{best-so-far} candidate after
 There is an exact same problem in EECS 376 homework 11 Question 7. To make the notes self-contained, we restate the problem and solution here.
 
 \begin{question}[Apartments in NYC]
-  Congratulations on your new job in NYC! Suppose you are searching for an apartment to rent and can visit at most $n$ listings in total. After viewing each apartment, you must either sign the lease \emph{immediately} (ending your search), or reject the apartment with no option to reconsider later, since apartments in NYC are highly sought after.
-  A natural strategy is:
-  \begin{itemize}
-    \item[(i)] \emph{reject} the first $m$ apartments you see  (where $1\leq m < n$), to get an idea of the landscape, and then
-    \item[(ii)] as soon as you see an apartment that is better than \emph{all} of the previous apartments you have seen, immediately sign the lease.
-  \end{itemize}
-  Assume the $n$ apartments appear in a uniformly random order. Remarkably, it turns out that choosing $m = n/e \approx n/2.718$ maximizes your chances of ending up with the best apartment. In this case, it turns out the success probability is $1/e \approx 0.367$. Explain why.
+	Congratulations on your new job in NYC! Suppose you are searching for an apartment to rent and can visit at most $n$ listings in total. After viewing each apartment, you must either sign the lease \emph{immediately} (ending your search), or reject the apartment with no option to reconsider later, since apartments in NYC are highly sought after.
+	A natural strategy is:
+	\begin{itemize}
+		\item[(i)] \emph{reject} the first $m$ apartments you see  (where $1\leq m < n$), to get an idea of the landscape, and then
+		\item[(ii)] as soon as you see an apartment that is better than \emph{all} of the previous apartments you have seen, immediately sign the lease.
+	\end{itemize}
+	Assume the $n$ apartments appear in a uniformly random order. Remarkably, it turns out that choosing $m = n/e \approx n/2.718$ maximizes your chances of ending up with the best apartment. In this case, it turns out the success probability is $1/e \approx 0.367$. Explain why.
 
 \end{question}
 \begin{proof}
-  Let $X_i$ be the event that the $i^{th}$ apartment is the best one overall and that you sign the lease for it.
+	Let $X_i$ be the event that the $i^{th}$ apartment is the best one overall and that you sign the lease for it.
 
-       $X_i$ happens if and only if:
-       \begin{enumerate}
-         \item The $i^{\text{th}}$ apartment is the best one overall
-         \item One sign the lease for it. Equivalently, all apartments from $m+1$ to $i-1$ are worse than the best apartment among the first $m$ apartments, which means the best among the first $i-1$ apartments is in the first $m$ apartments.
-       \end{enumerate}
+	$X_i$ happens if and only if:
+	\begin{enumerate}
+		\item The $i^{\text{th}}$ apartment is the best one overall
+		\item One sign the lease for it. Equivalently, all apartments from $m+1$ to $i-1$ are worse than the best apartment among the first $m$ apartments, which means the best among the first $i-1$ apartments is in the first $m$ apartments.
+	\end{enumerate}
 
-       The probability that the $i^{\text{th}}$ apartment is the best one overall is $\frac{1}{n}$, and the probability that the best among the first $i-1$ apartments is in the first $m$ apartments is $\frac{m}{i-1}$.
+	The probability that the $i^{\text{th}}$ apartment is the best one overall is $\frac{1}{n}$, and the probability that the best among the first $i-1$ apartments is in the first $m$ apartments is $\frac{m}{i-1}$.
 
-       Therefore, \[
-         \Pr[X_i] = \frac{1}{n} \cdot \frac{m}{i-1} = \frac{m}{n(i-1)}
-       \]
+	Therefore, \[
+		\Pr[X_i] = \frac{1}{n} \cdot \frac{m}{i-1} = \frac{m}{n(i-1)}
+	\]
 
- Let $X$ be the event that you sign the lease with the best apartment overall.
+	Let $X$ be the event that you sign the lease with the best apartment overall.
 
-       $X$ is the union of all $X_i$ for $i=m+1$ to $n$. Since all $X_i$ are pairwise disjoint, we have:
-       \[
-         \Pr[X] = \sum_{i=m+1}^{n} \Pr[X_i] = \sum_{i=m+1}^{n} \frac{m}{n(i-1)} = \frac{m}{n} \sum_{j=m+1}^{n} \frac{1}{j-1}
-       \]
+	$X$ is the union of all $X_i$ for $i=m+1$ to $n$. Since all $X_i$ are pairwise disjoint, we have:
+	\[
+		\Pr[X] = \sum_{i=m+1}^{n} \Pr[X_i] = \sum_{i=m+1}^{n} \frac{m}{n(i-1)} = \frac{m}{n} \sum_{j=m+1}^{n} \frac{1}{j-1}
+	\]
 
-       \[
-         \Pr[X] = \frac{m}{n} (\sum_{j=m+1}^{n} \frac{1}{j} + \frac{1}{m} - \frac{1}{n}) \approx \frac{m}{n} (\ln n - \ln m + \frac{1}{m} - \frac{1}{n}) = \frac{m}{n} \ln(\frac{n}{m}) + \frac{1}{n} - \frac{m}{n^2}
-       \]
+	\[
+		\Pr[X] = \frac{m}{n} (\sum_{j=m+1}^{n} \frac{1}{j} + \frac{1}{m} - \frac{1}{n}) \approx \frac{m}{n} (\ln n - \ln m + \frac{1}{m} - \frac{1}{n}) = \frac{m}{n} \ln(\frac{n}{m}) + \frac{1}{n} - \frac{m}{n^2}
+	\]
 
-       Let $x = \frac{m}{n}$. Then $\Pr[X] \approx x \ln(\frac{1}{x}) + \frac{1}{n} - \frac{x}{n}$. Denote right hand side as $f(x)$.
+	Let $x = \frac{m}{n}$. Then $\Pr[X] \approx x \ln(\frac{1}{x}) + \frac{1}{n} - \frac{x}{n}$. Denote right hand side as $f(x)$.
 
-       \[
-         f'(x) = \ln(\frac{1}{x}) + x \cdot x \cdot \frac{-1}{x^2} - \frac{1}{n} = -\ln(x) - 1 - \frac{1}{n}
-       \]
+	\[
+		f'(x) = \ln(\frac{1}{x}) + x \cdot x \cdot \frac{-1}{x^2} - \frac{1}{n} = -\ln(x) - 1 - \frac{1}{n}
+	\]
 
-       Solving $f'(x) = 0$, we have:
-       \[
-         -\ln(x) - 1 - \frac{1}{n} = 0 \implies \ln(x) = -1 - \frac{1}{n} \implies x = e^{-1 - \frac{1}{n}} \approx \frac{1}{e} \text{ as } n \rightarrow \infty
-       \]
+	Solving $f'(x) = 0$, we have:
+	\[
+		-\ln(x) - 1 - \frac{1}{n} = 0 \implies \ln(x) = -1 - \frac{1}{n} \implies x = e^{-1 - \frac{1}{n}} \approx \frac{1}{e} \text{ as } n \rightarrow \infty
+	\]
 
-       Therefore, $\Pr[X]$ is maximized when $x = \frac{m}{n} = \frac{1}{e} \implies m = \frac{n}{e}$.
+	Therefore, $\Pr[X]$ is maximized when $x = \frac{m}{n} = \frac{1}{e} \implies m = \frac{n}{e}$.
 \end{proof}
 
 That's why it's better to explore the first $36\%$ of the options before exploiting the best option found so far!
 
 \chapter{Competitive Analysis}
 
-\begin{question}[Ski Rental Problem]
-  You are planning to go skiing for $T$ days, but you don't know $T$ in advance. (It depends on the weather!)
+\begin{problem}[Ski Rental Problem]
+You are planning to go skiing for $T$ days, but you don't know $T$ in advance. (It depends on the weather!)
 
-  Each day, you can either rent skis for \$1 per day, or buy skis outright for \$B (where $B$ is a known constant larger than 1). Your goal is to minimize your total cost over the $T$ days.
-\end{question}
+Each day, you can either rent skis for \$1 per day, or buy skis outright for \$B (where $B$ is a known constant larger than 1). Your goal is to minimize your total cost over the $T$ days.
+\end{problem}
 
 If we have an oracle that tells us $T$ in advance, the optimal strategy is to rent skis for $T$ days if $T < B$, and buy skis on day 1 if $T \geq B$. The optimal cost is therefore $\min(T, B)$.
 
 But we don't have an oracle, so we'll perform worse than the optimal strategy. To measure how much worse, we use \textit{competitive analysis}.
 
 \begin{definition}[Competitive Ratio]
-  The competitive ratio is $c$, if the cost incurred by the online algorithm is at most $c$ times the cost incurred by the optimal offline algorithm (the one with an oracle).
+	The competitive ratio is $c$, if the cost incurred by the online algorithm is at most $c$ times the cost incurred by the optimal offline algorithm (the one with an oracle).
 \end{definition}
 
 \begin{remark}
-  This is equivalent to:
-  \begin{enumerate}
-    \item Compare the cost of your online algorithm to the optimal offline algorithm for all possible inputs.
-    \item Denote $\ALG$ as the cost of your online algorithm and $\OPT$ as the cost of the optimal offline algorithm.
-    \item The competitive ratio is the maximum $\ALG / \OPT$.
-  \end{enumerate}
+	This is equivalent to:
+	\begin{enumerate}
+		\item Compare the cost of your online algorithm to the optimal offline algorithm for all possible inputs.
+		\item Denote $\ALG$ as the cost of your online algorithm and $\OPT$ as the cost of the optimal offline algorithm.
+		\item The competitive ratio is the maximum $\ALG / \OPT$.
+	\end{enumerate}
 \end{remark}
 
 In this problem $\OPT = \min(T, B)$.
@@ -100,44 +100,44 @@ It's not hard to observe that any deterministic algorithm will suggest we buy th
 For $\ALG(k)$, the cost incurred is:
 
 \[ \ALG = \begin{cases}
-  T & \text{if } T < k \\
-  k - 1 + B & \text{if } T \geq k
-\end{cases} \]
+		T         & \text{if } T < k    \\
+		k - 1 + B & \text{if } T \geq k
+	\end{cases} \]
 
 Let's try 2 possible values for $k$: $k = B/2$ and $k = B$.
 
 \begin{itemize}
-  \item If we choose $k = B/2$:
-    \[ \text{ratio} = \max\frac{\ALG}{\OPT} = \max\begin{cases}
-      \frac{T}{T} = 1 & \text{if } T < B/2 \\
-      \max\frac{B/2 - 1 + B}{T} = \max\frac{3B/2 - 1}{T} = \frac{3B/2 - 1}{B/2} = 3 - \frac{2}{B} & \text{if } B/2 \leq T < B \\
-      \frac{B/2 - 1 + B}{B} = \frac{3}{2} - \frac{1}{B} & \text{if } T \geq B
-    \end{cases} \]
-    Therefore, the competitive ratio is at most $3 - \frac{2}{B}$.
+	\item If we choose $k = B/2$:
+	      \[ \text{ratio} = \max\frac{\ALG}{\OPT} = \max\begin{cases}
+			      \frac{T}{T} = 1                                                                             & \text{if } T < B/2        \\
+			      \max\frac{B/2 - 1 + B}{T} = \max\frac{3B/2 - 1}{T} = \frac{3B/2 - 1}{B/2} = 3 - \frac{2}{B} & \text{if } B/2 \leq T < B \\
+			      \frac{B/2 - 1 + B}{B} = \frac{3}{2} - \frac{1}{B}                                           & \text{if } T \geq B
+		      \end{cases} \]
+	      Therefore, the competitive ratio is at most $3 - \frac{2}{B}$.
 
-  \item If we choose $k = B$:
-    \[ \text{ratio} = \max\frac{\ALG}{\OPT} = \max\begin{cases}
-      \frac{T}{T} = 1 & \text{if } T < B \\
-      \frac{B - 1 + B}{B} = 2 - \frac{1}{B} & \text{if } T \geq B
-    \end{cases} \]
-    Therefore, the competitive ratio is at most $2 - \frac{1}{B}$.
+	\item If we choose $k = B$:
+	      \[ \text{ratio} = \max\frac{\ALG}{\OPT} = \max\begin{cases}
+			      \frac{T}{T} = 1                       & \text{if } T < B    \\
+			      \frac{B - 1 + B}{B} = 2 - \frac{1}{B} & \text{if } T \geq B
+		      \end{cases} \]
+	      Therefore, the competitive ratio is at most $2 - \frac{1}{B}$.
 \end{itemize}
 
 \begin{theorem}
-  No deterministic algorithm can achieve a competitive ratio better than $2 - \frac{1}{B}$.
+	No deterministic algorithm can achieve a competitive ratio better than $2 - \frac{1}{B}$.
 \end{theorem}
 
 \begin{proof}
-One can easily verify this by analyzing $\ALG(\epsilon B)$ for all $\epsilon$. 
+	One can easily verify this by analyzing $\ALG(\epsilon B)$ for all $\epsilon$.
 
-Note that the adversary can always choose $T$ to be $\epsilon B$ (it turns out that such naive choice is sufficient for this proof.)
+	Note that the adversary can always choose $T$ to be $\epsilon B$ (it turns out that such naive choice is sufficient for this proof.)
 
-In such case, we have:
+	In such case, we have:
 
-\[ \text{ratio} = \max\frac{\ALG}{\OPT} = \frac{\epsilon B - 1 + B}{\min(\epsilon B, B)} = \begin{cases}
-  \frac{\epsilon B - 1 + B}{\epsilon B} = 1 + \frac{B - 1}{\epsilon B} > 1 + \frac{B - 1}{B} = 2 - \frac{1}{B}  & \text{if } \epsilon < 1 \\
-  \frac{\epsilon B - 1 + B}{B} = \epsilon + 1 - \frac{1}{B} \geq 2 - \frac{1}{B}  & \text{if } \epsilon \geq 1
-  \end{cases} \]
+	\[ \text{ratio} = \max\frac{\ALG}{\OPT} = \frac{\epsilon B - 1 + B}{\min(\epsilon B, B)} = \begin{cases}
+			\frac{\epsilon B - 1 + B}{\epsilon B} = 1 + \frac{B - 1}{\epsilon B} > 1 + \frac{B - 1}{B} = 2 - \frac{1}{B} & \text{if } \epsilon < 1    \\
+			\frac{\epsilon B - 1 + B}{B} = \epsilon + 1 - \frac{1}{B} \geq 2 - \frac{1}{B}                               & \text{if } \epsilon \geq 1
+		\end{cases} \]
 \end{proof}
 
 If we have an adversary that can choose $T$ after seeing our deterministic algorithm, no algorithms can do good enough. So, what we need is randomization.
@@ -145,32 +145,32 @@ If we have an adversary that can choose $T$ after seeing our deterministic algor
 \section{Randomized Competitive Analysis}
 
 \begin{definition}[Expected Competitive Ratio]
-  The expected competitive ratio is $c$, if the expected cost incurred by the online \textbf{randomized} algorithm is at most $c$ times the cost incurred by the optimal offline algorithm, i.e. $\frac{\mathbb{E}[\ALG]}{\OPT} \leq c$.
+	The expected competitive ratio is $c$, if the expected cost incurred by the online \textbf{randomized} algorithm is at most $c$ times the cost incurred by the optimal offline algorithm, i.e. $\frac{\mathbb{E}[\ALG]}{\OPT} \leq c$.
 
-  Specifically, the adversary can choose the worst-case input after seeing the distribution of the randomized algorithm, but before seeing the random choices made by the algorithm.
+	Specifically, the adversary can choose the worst-case input after seeing the distribution of the randomized algorithm, but before seeing the random choices made by the algorithm.
 \end{definition}
 
 \begin{eg}
-  We call $\ALG(B/2)$ with probability $p$ and $\ALG(B)$ with probability $1-p$. Following the calculation above:
+	We call $\ALG(B/2)$ with probability $p$ and $\ALG(B)$ with probability $1-p$. Following the calculation above:
 
-  \[ \text{expected ratio} = \frac{\mathbb{E}[\ALG]}{\OPT} = \begin{cases}
-    1 & \text{if } T < B/2 \\
-    p(3 - \frac{2}{B}) + (1-p) \cdot \frac{T}{T} = 1 + p(2 - \frac{2}{B}) & \text{if } B/2 \leq T < B \\
-    p(\frac{3}{2} - \frac{1}{B}) + (1-p)(2 - \frac{1}{B}) = 2 - \frac{1}{B} - \frac{p}{2} & \text{if } T \geq B
-  \end{cases} \]
+	\[ \text{expected ratio} = \frac{\mathbb{E}[\ALG]}{\OPT} = \begin{cases}
+			1                                                                                     & \text{if } T < B/2        \\
+			p(3 - \frac{2}{B}) + (1-p) \cdot \frac{T}{T} = 1 + p(2 - \frac{2}{B})                 & \text{if } B/2 \leq T < B \\
+			p(\frac{3}{2} - \frac{1}{B}) + (1-p)(2 - \frac{1}{B}) = 2 - \frac{1}{B} - \frac{p}{2} & \text{if } T \geq B
+		\end{cases} \]
 
-  The only variable here is $p$. To minimize the competitive ratio, we intuitively want to set the second and third cases equal:
-  \begin{align*}
-    1 + p(2 - \frac{2}{B}) &= 2 - \frac{1}{B} - \frac{p}{2} \\
-    p(2 - \frac{2}{B} + \frac{1}{2}) &= 1 - \frac{1}{B} \\
-    p &= \frac{1 - \frac{1}{B}}{2 - \frac{2}{B} + \frac{1}{2}} = \frac{2B - 2}{5 B - 4}
-  \end{align*}
+	The only variable here is $p$. To minimize the competitive ratio, we intuitively want to set the second and third cases equal:
+	\begin{align*}
+		1 + p(2 - \frac{2}{B})           & = 2 - \frac{1}{B} - \frac{p}{2}                                                  \\
+		p(2 - \frac{2}{B} + \frac{1}{2}) & = 1 - \frac{1}{B}                                                                \\
+		p                                & = \frac{1 - \frac{1}{B}}{2 - \frac{2}{B} + \frac{1}{2}} = \frac{2B - 2}{5 B - 4}
+	\end{align*}
 
-  Then the ratio when $T \geq B/2$ is:
+	Then the ratio when $T \geq B/2$ is:
 
-  \[
-    2 - \frac{1}{B} - \frac{p}{2} = 2 - \frac{1}{B} - \frac{1}{2} \cdot \frac{2B - 2}{5 B - 4} = \frac{9B-7}{5B-4} - \frac{1}{B} \approx 1.7 \text{ as } B \rightarrow \infty
-  \]
+	\[
+		2 - \frac{1}{B} - \frac{p}{2} = 2 - \frac{1}{B} - \frac{1}{2} \cdot \frac{2B - 2}{5 B - 4} = \frac{9B-7}{5B-4} - \frac{1}{B} \approx 1.7 \text{ as } B \rightarrow \infty
+	\]
 \end{eg}
 
 This is already better than any deterministic algorithm. To do even better, we can apply a discrete randomized variable over all possible $k$s, instead of only 2 options.
@@ -178,5 +178,5 @@ This is already better than any deterministic algorithm. To do even better, we c
 Here we state without proof:
 
 \begin{theorem}
-  The best randomized competitive ratio achievable for the ski rental problem is $\frac{e}{e-1} \approx 1.58$.
+	The best randomized competitive ratio achievable for the ski rental problem is $\frac{e}{e-1} \approx 1.58$.
 \end{theorem}

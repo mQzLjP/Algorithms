@@ -1,85 +1,85 @@
 \chapter{Maximal Matching}
 
 \begin{definition}[Matching and Maximal Matching]
-    A \textbf{matching} in a graph \( G = (V, E) \) is a set of edges \( M \subseteq E \) such that no two edges in \( M \) share a common vertex.
-    
-    A matching $M$ is \textbf{maximum} if $|M| \geq |M'|$ for every matching $M'$ in $G$.
+	A \textbf{matching} in a graph \( G = (V, E) \) is a set of edges \( M \subseteq E \) such that no two edges in \( M \) share a common vertex.
 
-    A matching $M$ is \textbf{maximal} if there is no edge $e \in E \setminus M$ such that $M \cup \{e\}$ is also a matching.
+	A matching $M$ is \textbf{maximum} if $|M| \geq |M'|$ for every matching $M'$ in $G$.
+
+	A matching $M$ is \textbf{maximal} if there is no edge $e \in E \setminus M$ such that $M \cup \{e\}$ is also a matching.
 \end{definition}
 
-\begin{question}[Maximal Matching Problem]
-    Given a graph \( G = (V, E) \), find a maximal matching \( M \subseteq E \) in the LOCAL model.
+\begin{problem}[Maximal Matching Problem]
+Given a graph \( G = (V, E) \), find a maximal matching \( M \subseteq E \) in the LOCAL model.
 
-  The initial knowledge of each node \( v \in V \) includes $n, \text{ID}(v), \deg(v)$.
+The initial knowledge of each node \( v \in V \) includes $n, \text{ID}(v), \deg(v)$.
 
-    Express the number of rounds in terms of maximum degree $\Delta := \max_{v \in V} \deg(v)$.
-\end{question}
+Express the number of rounds in terms of maximum degree $\Delta := \max_{v \in V} \deg(v)$.
+\end{problem}
 
 We start with the idea of making the graph simpler:
 
 \begin{enumerate}
-  \item Every vertex $v$ propose to a random neighbor $u$.
-  \item If $u$ receives proposals, it accepts one of them uniformly at random and rejects the rest.
+	\item Every vertex $v$ propose to a random neighbor $u$.
+	\item If $u$ receives proposals, it accepts one of them uniformly at random and rejects the rest.
 
-    In this way we construced a directed graph. By Step 1, we ensure that the out degree of every vertex is at most 1. By Step 2, we ensure that the in degree of every vertex is at most 1. Therefore, the constructed directed graph is a collection of disjoint directed paths and directed cycles. This makes it possible for us to directly call Algorithm~\ref{alg:det-3-coloring}:
+	      In this way we construced a directed graph. By Step 1, we ensure that the out degree of every vertex is at most 1. By Step 2, we ensure that the in degree of every vertex is at most 1. Therefore, the constructed directed graph is a collection of disjoint directed paths and directed cycles. This makes it possible for us to directly call Algorithm~\ref{alg:det-3-coloring}:
 
-  \item Perform a 3-coloring on the directed graph using Algorithm~\ref{alg:det-3-coloring}.
+	\item Perform a 3-coloring on the directed graph using Algorithm~\ref{alg:det-3-coloring}.
 
-    Now we break the symmetry on each connected component, so we can ask the vertices to perform matching in order:
+	      Now we break the symmetry on each connected component, so we can ask the vertices to perform matching in order:
 
-    \begin{enumerate}
-      \item Vertices with color 0 match with their valid out-neighbor.
-      \item Vertices with color 1 match with their valid out-neighbor (if any).
-      \item Vertices with color 2 match with their valid out-neighbor (if any).
-    \end{enumerate}
+	      \begin{enumerate}
+		      \item Vertices with color 0 match with their valid out-neighbor.
+		      \item Vertices with color 1 match with their valid out-neighbor (if any).
+		      \item Vertices with color 2 match with their valid out-neighbor (if any).
+	      \end{enumerate}
 
-    As vertices with a same color do not share edges, they can perform matching simultaneously without conflicts.
+	      As vertices with a same color do not share edges, they can perform matching simultaneously without conflicts.
 
-    We want to guarantee that the maximum degree of the unmatched graph drops by at least a constant number after Steps 1-3. However that's not the case.
-    Consider a vertex $v$ that proceed to Step 3 but fail to match its neighbor. If it has neighbors that fail to proceed to Step 3, then their degree does not drop.
+	      We want to guarantee that the maximum degree of the unmatched graph drops by at least a constant number after Steps 1-3. However that's not the case.
+	      Consider a vertex $v$ that proceed to Step 3 but fail to match its neighbor. If it has neighbors that fail to proceed to Step 3, then their degree does not drop.
 
-    It's easy to fix though:
+	      It's easy to fix though:
 
-  \item Unmatched vertices $v$ that don't participate in Step 3 re-send a proposal to the same neighbor $u$.
+	\item Unmatched vertices $v$ that don't participate in Step 3 re-send a proposal to the same neighbor $u$.
 
-  \item Unmatched vertices $u$ that receive proposals match to one of them uniformly at random and reject the rest.
+	\item Unmatched vertices $u$ that receive proposals match to one of them uniformly at random and reject the rest.
 \end{enumerate}
 
 Here we state some lemmas without proof (they are easy):
 
 \begin{lemma}
-  If $(v,u)$ is a proposed edge in Step 1, then either $u$ or $v$ is matched in Step 1-5.
+	If $(v,u)$ is a proposed edge in Step 1, then either $u$ or $v$ is matched in Step 1-5.
 \end{lemma}
 
 \begin{lemma}
-  One iteration of Steps 1-5 reduces the maximum degree of the unmatched graph by at least 1.
+	One iteration of Steps 1-5 reduces the maximum degree of the unmatched graph by at least 1.
 \end{lemma}
 
 \begin{lemma}
-  Steps 1-5 can be implemented in $\log^*n + O(1)$ rounds in the LOCAL model.
+	Steps 1-5 can be implemented in $\log^*n + O(1)$ rounds in the LOCAL model.
 \end{lemma}
 
 With these lemmas, we have:
 
 \begin{theorem}
-  The Maximal Matching Problem can be solved deterministically in $O(\log^*n\cdot \Delta)$ rounds in the LOCAL model.
+	The Maximal Matching Problem can be solved deterministically in $O(\log^*n\cdot \Delta)$ rounds in the LOCAL model.
 \end{theorem}
 
 \chapter{$(\Delta + 1)$-Coloring}
 
-\begin{question}[$(\Delta + 1)$-Coloring Problem]
-  Given a graph \( G = (V, E) \), assign a color \( \phi(v) \in [\Delta + 1] \) to each vertex \( v \in V \) such that $(u,v) \in E\implies\phi(u) \neq \phi(v)$.
+\begin{problem}[$(\Delta + 1)$-Coloring Problem]
+Given a graph \( G = (V, E) \), assign a color \( \phi(v) \in [\Delta + 1] \) to each vertex \( v \in V \) such that $(u,v) \in E\implies\phi(u) \neq \phi(v)$.
 
-  In the LOCAL model, suppose every vertex also knows $\Delta$ besides the original initial knowledge.
-\end{question}
+In the LOCAL model, suppose every vertex also knows $\Delta$ besides the original initial knowledge.
+\end{problem}
 
 Current deterministic algorithms are not very efficient. Therefore, we only focus on the randomized algorithm here.
 
 As Chapter~\ref{chap:ring-coloring} suggests, randomly 3-color a ring takes $O(\log n)$ rounds, so it will be ideal if the algorithm for $(\Delta + 1)$-Coloring can also run in $O(\log n)$ rounds.
 
 \begin{remark} \label{rem:rand-algo-logn-iterations}
-  For a randomized algorithm, it can run in $O(\log n)$ iterations if every iteration runs in constant time, and the success probability of each iteration is at least a constant $\alpha$.
+	For a randomized algorithm, it can run in $O(\log n)$ iterations if every iteration runs in constant time, and the success probability of each iteration is at least a constant $\alpha$.
 \end{remark}
 
 In this case, if $\Pr[\text{successfully coloring oneself in a round}]\geq \alpha$, $\Pr[\text{unsuccessful after }c\ln n\text{ rounds}]\leq (1-\alpha)^{c\ln n} \leq e^{-\alpha c \ln n} \approx 1/n^{\alpha c}$. Setting $c = 1/\alpha$ or $c = 10/\alpha$ will give us a high probability of success.
@@ -92,48 +92,48 @@ Say, we denote the function of partial coloring as:
 
 where $\psi(v) = \perp$ means $v$ is not colored yet.
 
-Suppose, at the start of each iteration, $v$ has $d$ uncolored neighbors. Then $v$ has at least $d+1$ colors to choose from. 
+Suppose, at the start of each iteration, $v$ has $d$ uncolored neighbors. Then $v$ has at least $d+1$ colors to choose from.
 
 If all vertices choose their color at the same time, the lower bound on the probability that $v$ has a valid coloring is low and tedious to analysis. Instead, we want to break ties by `waking up' only part of the vertices every iteration.
 
 \begin{algorithm}
-  \caption{Randomized $(\Delta + 1)$-Coloring Algorithm} \label{alg:rand-delta-plus-1-coloring}
-  \While{vertex $v$ is uncolored}{
-    become active with probability $1/2$\;
-    pick $\psi(v) \in [\Delta + 1] - \phi(N(v))$ uniformly at random\;
-    \If {$\forall u\in N(v), \psi(u) \neq \psi(v)$}{
-      set $\phi(v) = \psi(v)$\;
-      break\;
-    }
-  }
+	\caption{Randomized $(\Delta + 1)$-Coloring Algorithm} \label{alg:rand-delta-plus-1-coloring}
+	\While{vertex $v$ is uncolored}{
+		become active with probability $1/2$\;
+		pick $\psi(v) \in [\Delta + 1] - \phi(N(v))$ uniformly at random\;
+		\If {$\forall u\in N(v), \psi(u) \neq \psi(v)$}{
+			set $\phi(v) = \psi(v)$\;
+			break\;
+		}
+	}
 \end{algorithm}
 
 \begin{theorem}
-  The probability that an uncolored vertex $v$ becomes colored in one iteration of Algorithm~\ref{alg:rand-delta-plus-1-coloring} is at least $1/8$.
+	The probability that an uncolored vertex $v$ becomes colored in one iteration of Algorithm~\ref{alg:rand-delta-plus-1-coloring} is at least $1/8$.
 \end{theorem}
 \begin{proof}
-There're 3 layers of randomness here: whether $v$ is active, how $v$ chooses its color, and how neighbors of $v$ choose their colors. In this proof, we reverse their order, as it's equivalent to say that we let all vertices choose their colors first, then decide to `listen' to them according to their active status.
+	There're 3 layers of randomness here: whether $v$ is active, how $v$ chooses its color, and how neighbors of $v$ choose their colors. In this proof, we reverse their order, as it's equivalent to say that we let all vertices choose their colors first, then decide to `listen' to them according to their active status.
 
-\begin{enumerate}
-  \item When $v$'s neighbors choose their colors, we say a color is `good' for a vertex $v$ if it's picked by at most 1 of $N(v)$; otherwise it's `bad'. Note that there are at most $d/2$ bad colors, as each bad color is picked by at least 2 neighbors. Therefore, there are at least $(d+1) - (d/2) = d/2 + 1$ good colors for $v$.
-  \item When $v$ chooses its color, the probability that it picks a good color is at least
+	\begin{enumerate}
+		\item When $v$'s neighbors choose their colors, we say a color is `good' for a vertex $v$ if it's picked by at most 1 of $N(v)$; otherwise it's `bad'. Note that there are at most $d/2$ bad colors, as each bad color is picked by at least 2 neighbors. Therefore, there are at least $(d+1) - (d/2) = d/2 + 1$ good colors for $v$.
+		\item When $v$ chooses its color, the probability that it picks a good color is at least
 
-    \[
-      \frac{d/2 + 1}{d + 1} \geq \frac{1}{2}.
-    \]
-  \item Now we wake up vertices with probability $1/2$.
-    Suppose a `good' color is picked by both $v$ and one neighbor (the case where no neighbors choose the same color as $v$ is of course better.) The chance of $v$ being active while that neighbor is inactive is
+		      \[
+			      \frac{d/2 + 1}{d + 1} \geq \frac{1}{2}.
+		      \]
+		\item Now we wake up vertices with probability $1/2$.
+		      Suppose a `good' color is picked by both $v$ and one neighbor (the case where no neighbors choose the same color as $v$ is of course better.) The chance of $v$ being active while that neighbor is inactive is
 
-    \[
-      \frac{1}{2} \cdot \frac{1}{2} = \frac{1}{4}.
-    \]
-\end{enumerate}
+		      \[
+			      \frac{1}{2} \cdot \frac{1}{2} = \frac{1}{4}.
+		      \]
+	\end{enumerate}
 
-    Therefore, the probability that $v$ successfully colors itself in one iteration is at least
+	Therefore, the probability that $v$ successfully colors itself in one iteration is at least
 
-    \[
-      \frac{1}{2} \cdot \frac{1}{4} = \frac{1}{8}.
-    \]
+	\[
+		\frac{1}{2} \cdot \frac{1}{4} = \frac{1}{8}.
+	\]
 \end{proof}
 
 Combining with Remark~\ref{rem:rand-algo-logn-iterations}, we have proven that Algorithm~\ref{alg:rand-delta-plus-1-coloring} runs in $O(\log n)$ rounds with high probability.

@@ -1,8 +1,8 @@
 \chapter{Selection}
 
-\begin{question}[Selection Problem]
-  Given an totally ordered array $S$ of $n$ distinct numbers and an integer $k$, find the $k$-th smallest number in $S$.
-\end{question}
+\begin{problem}[Selection Problem]
+Given an totally ordered array $S$ of $n$ distinct numbers and an integer $k$, find the $k$-th smallest number in $S$.
+\end{problem}
 
 When $k = 1$, this is the minimum problem, which can be solved in $O(n)$ time by scanning through the array. Can we reach $O(n)$ time for general $k$?
 
@@ -11,54 +11,54 @@ When $k = 1$, this is the minimum problem, which can be solved in $O(n)$ time by
 Inspired by QuickSort, we can use a similar partitioning idea to solve the selection problem:
 
 \begin{algorithm}[H]
-  \caption{Rank$(e,S)$}
-  scan through $S$ to find the rank of $e$ in $S$\;
-  \Return the rank\;
+	\caption{Rank$(e,S)$}
+	scan through $S$ to find the rank of $e$ in $S$\;
+	\Return the rank\;
 \end{algorithm}
 
 \begin{algorithm}[H]
-  \caption{QuickSelect$(k,S)$}
-  randomly pick a pivot $e$ from $S$\;
-  $r \gets$ Rank$(e,S)$\;
-  \If{$k = r$}{
-    \Return $e$\;
-  }
-  $S_<\gets \{x \in S \mid x < e\}$\;
-  $S_>\gets \{x \in S \mid x > e\}$\;
-  \eIf{$k < r$}{
-    \Return QuickSelect$(k,S_<)$\;
-  }{
-    \Return QuickSelect$(k-r, S_>)$\;
-  }
+	\caption{QuickSelect$(k,S)$}
+	randomly pick a pivot $e$ from $S$\;
+	$r \gets$ Rank$(e,S)$\;
+	\If{$k = r$}{
+		\Return $e$\;
+	}
+	$S_<\gets \{x \in S \mid x < e\}$\;
+	$S_>\gets \{x \in S \mid x > e\}$\;
+	\eIf{$k < r$}{
+		\Return QuickSelect$(k,S_<)$\;
+	}{
+		\Return QuickSelect$(k-r, S_>)$\;
+	}
 \end{algorithm}
 
 \begin{theorem}
-  The expected running time of QuickSelect is $O(n)$.
+	The expected running time of QuickSelect is $O(n)$.
 \end{theorem}
 \begin{proof}
-  Let $Q(k,n)$ be the expected running time of QuickSelect$(k,S)$ where $|S|=n$. We obtain the following recurrence relation:
+	Let $Q(k,n)$ be the expected running time of QuickSelect$(k,S)$ where $|S|=n$. We obtain the following recurrence relation:
 
-  \[
-    Q(k,n) = n-1 + \frac{1}{n} \left( \sum_{r = k+1}^{n}Q(k,r-1) + \sum_{r=1}^{k-1} Q(k-r,n-r) \right)
-  \]
+	\[
+		Q(k,n) = n-1 + \frac{1}{n} \left( \sum_{r = k+1}^{n}Q(k,r-1) + \sum_{r=1}^{k-1} Q(k-r,n-r) \right)
+	\]
 
-  For simplicity, we consider the worst case over all $k$ (denote it by $Q(n)$):
+	For simplicity, we consider the worst case over all $k$ (denote it by $Q(n)$):
 
-  \begin{align*}
-    Q(n) &= n-1 + \frac{1}{n} \sum_{r=1}^{n} \max\{Q(r-1), Q(n-r)\}\\
-      &\leq n-1 + \frac{2}{n} \sum_{r = \frac{n}{2}}^{n-1} Q(r) \\
-  \end{align*}
+	\begin{align*}
+		Q(n) & = n-1 + \frac{1}{n} \sum_{r=1}^{n} \max\{Q(r-1), Q(n-r)\} \\
+		     & \leq n-1 + \frac{2}{n} \sum_{r = \frac{n}{2}}^{n-1} Q(r)  \\
+	\end{align*}
 
-  We will prove by induction that $Q(n) \leq c n$ for some constant $c > 0$:
+	We will prove by induction that $Q(n) \leq c n$ for some constant $c > 0$:
 
-  \begin{align*}
-    Q(n) &\overset{IH}{\leq} n-1 + \frac{2}{n} \sum_{r = \frac{n}{2}}^{n-1} c r \\
-         &= n-1 + \frac{2c}{n}\cdot\frac{3n}{4}\cdot \frac{n}{2}\\
-         &\leq n-1 + \frac{3cn}{4} \\
-         &\leq cn \text{ when } c \geq 4
-  \end{align*}
+	\begin{align*}
+		Q(n) & \overset{IH}{\leq} n-1 + \frac{2}{n} \sum_{r = \frac{n}{2}}^{n-1} c r \\
+		     & = n-1 + \frac{2c}{n}\cdot\frac{3n}{4}\cdot \frac{n}{2}                \\
+		     & \leq n-1 + \frac{3cn}{4}                                              \\
+		     & \leq cn \text{ when } c \geq 4
+	\end{align*}
 
-  Therefore, $Q(n) = O(n)$.
+	Therefore, $Q(n) = O(n)$.
 \end{proof}
 
 The worst case, however, is $O(n^2)$ when the pivot is always the smallest or largest element. To avoid this, we can use a deterministic method to choose a good pivot.
@@ -68,90 +68,90 @@ The worst case, however, is $O(n^2)$ when the pivot is always the smallest or la
 We can leave everything the same as QuickSelect, except for the pivot selection. We will use the \textbf{Median of Medians} algorithm to select a good pivot in linear time.
 
 \begin{algorithm}[H]
-  \caption{DeterministicSelect$(k,S)$}
-  partition $S$ into groups of 5 elements each (with less than 4 leftover)\;
-  $S'\gets$ array of medians of each group\;
-  $e \gets$ DeterministicSelect$(\lceil |S'|/2 \rceil, S')$\;
- $r \gets$ Rank$(e,S)$\;
-  \If{$k = r$}{
-    \Return $e$\;
-  }
-  $S_<\gets \{x \in S \mid x < e\}$\;
-  $S_>\gets \{x \in S \mid x > e\}$\;
-  \eIf{$k < r$}{
-    \Return DeterministicSelect$(k,S_<)$\;
-  }{
-    \Return DeterministicSelect$(k-r, S_>)$\;
-  }
+	\caption{DeterministicSelect$(k,S)$}
+	partition $S$ into groups of 5 elements each (with less than 4 leftover)\;
+	$S'\gets$ array of medians of each group\;
+	$e \gets$ DeterministicSelect$(\lceil |S'|/2 \rceil, S')$\;
+	$r \gets$ Rank$(e,S)$\;
+	\If{$k = r$}{
+		\Return $e$\;
+	}
+	$S_<\gets \{x \in S \mid x < e\}$\;
+	$S_>\gets \{x \in S \mid x > e\}$\;
+	\eIf{$k < r$}{
+		\Return DeterministicSelect$(k,S_<)$\;
+	}{
+		\Return DeterministicSelect$(k-r, S_>)$\;
+	}
 \end{algorithm}
 
 \begin{theorem}
-  The running time of DeterministicSelect is $O(n)$.
+	The running time of DeterministicSelect is $O(n)$.
 \end{theorem}
 \begin{proof}
-  We first analyze the range of $e$'s rank. 
+	We first analyze the range of $e$'s rank.
 
-  Since $e$ is the median of medians, at least half of the groups have their medians less than $e$. Each such group contributes at least 3 elements less than $e$ (the median and two smaller elements). Therefore, the number of elements less than $e$ is at least $3n/10$. 
+	Since $e$ is the median of medians, at least half of the groups have their medians less than $e$. Each such group contributes at least 3 elements less than $e$ (the median and two smaller elements). Therefore, the number of elements less than $e$ is at least $3n/10$.
 
-  Similarly, at least $3n/10$ elements are greater than $e$. Thus, the rank of $e$ is between $3n/10$ and $7n/10$, which also means the sizes of $|S_<|$ and $|S_>|$ are at most $7n/10$.
+	Similarly, at least $3n/10$ elements are greater than $e$. Thus, the rank of $e$ is between $3n/10$ and $7n/10$, which also means the sizes of $|S_<|$ and $|S_>|$ are at most $7n/10$.
 
-  Denote $T(n)$ as the running time of DeterministicSelect on an input of size $n$. As finding the median of 5 items takes 8 comparisons, we have the following recurrence relation:
+	Denote $T(n)$ as the running time of DeterministicSelect on an input of size $n$. As finding the median of 5 items takes 8 comparisons, we have the following recurrence relation:
 
-  \[ T(n) = 8n/5 + T(n/5) + n-1 + T(7n/10)\leq 13n/5 + T(n/5) + T(7n/10) \]
+	\[ T(n) = 8n/5 + T(n/5) + n-1 + T(7n/10)\leq 13n/5 + T(n/5) + T(7n/10) \]
 
-  As $1/5 + 7/10 = 9/10 < 1$, the sum of input sizes in the recurrence decays. Therefore, we could expect $O(n)$ to be the dominant term. We will prove by induction that $T(n) \leq c n$ for some constant $c > 0$:
+	As $1/5 + 7/10 = 9/10 < 1$, the sum of input sizes in the recurrence decays. Therefore, we could expect $O(n)$ to be the dominant term. We will prove by induction that $T(n) \leq c n$ for some constant $c > 0$:
 
-  \begin{align*}
-    T(n) &\overset{IH}{\leq} 13n/5 + c n/5 + c \cdot 7n/10 \\
-         & = n\left( \frac{13}{5} + \frac{9c}{10} \right) \\
-         & \leq c n \text{ when } c \geq 26
-  \end{align*}
+	\begin{align*}
+		T(n) & \overset{IH}{\leq} 13n/5 + c n/5 + c \cdot 7n/10 \\
+		     & = n\left( \frac{13}{5} + \frac{9c}{10} \right)   \\
+		     & \leq c n \text{ when } c \geq 26
+	\end{align*}
 
-  Therefore, $T(n) = O(n)$.
+	Therefore, $T(n) = O(n)$.
 \end{proof}
 
 \section{Lower Bound}
 
 Now let's look at the lower bound of the selection problem.
 \begin{theorem}
-  Any comparison-based algorithm for the selection problem makes at least $\frac{3n}{2}-O(\log n)$ comparisons in the worst case.
+	Any comparison-based algorithm for the selection problem makes at least $\frac{3n}{2}-O(\log n)$ comparisons in the worst case.
 \end{theorem}
 \begin{proof}
-  We use a binary decision tree to model any comparison-based selection algorithm. Each internal node represents a comparison between two elements, and each leaf node represents a possible outcome (i.e., the $k$-th smallest element).
+	We use a binary decision tree to model any comparison-based selection algorithm. Each internal node represents a comparison between two elements, and each leaf node represents a possible outcome (i.e., the $k$-th smallest element).
 
-\begin{tikzpicture}[
-    node distance=0.2cm and 0.3cm,
-    every node/.style={draw, rectangle, rounded corners, align=center, minimum width=2.5cm, minimum height=0.9cm, font=\small},
-]
+	\begin{tikzpicture}[
+			node distance=0.2cm and 0.3cm,
+			every node/.style={draw, rectangle, rounded corners, align=center, minimum width=2.5cm, minimum height=0.9cm, font=\small},
+		]
 
-% Nodes
-\node (A) {$a\overset{?}{<}b$};
-\node (B) [below right=of A] {$a\overset{?}{<}c$};
-\node (C) [below left=of A] {$b\overset{?}{<}d$};
-\node (D) [below left=of C] {return $e$};
-\node (E) [below right=of C] {return $f$};
+		% Nodes
+		\node (A) {$a\overset{?}{<}b$};
+		\node (B) [below right=of A] {$a\overset{?}{<}c$};
+		\node (C) [below left=of A] {$b\overset{?}{<}d$};
+		\node (D) [below left=of C] {return $e$};
+		\node (E) [below right=of C] {return $f$};
 
-% Edges
-\draw[thick] (A) -- (B);
-\draw[thick] (A) -- (C);
-\draw[thick] (C) -- (D);
-\draw[thick] (C) -- (E);
+		% Edges
+		\draw[thick] (A) -- (B);
+		\draw[thick] (A) -- (C);
+		\draw[thick] (C) -- (D);
+		\draw[thick] (C) -- (E);
 
-\end{tikzpicture}
+	\end{tikzpicture}
 
-The number of comparisons made by the algorithm corresponds to the depth of the leaf node in the decision tree.
+	The number of comparisons made by the algorithm corresponds to the depth of the leaf node in the decision tree.
 
-Finding the $k$-th smallest element is equivalent to splitting $S$ into 2 sets, $L$ and $U$, where any element in $L$ is less than any element in $U$, and $|L| = k-1$, and then find the smallest element in $U$.
+	Finding the $k$-th smallest element is equivalent to splitting $S$ into 2 sets, $L$ and $U$, where any element in $L$ is less than any element in $U$, and $|L| = k-1$, and then find the smallest element in $U$.
 
-Therefore, the decision tree of Selection must contain subtrees of finding the minimum in $U$ for each possible $L$. Finding the minimum in $n-k+1$ elements requires at least $n-k$ comparisons, so every subtree has depth at least $n-k$, and consequently, at least $2^{n-k}$ leaf nodes.
+	Therefore, the decision tree of Selection must contain subtrees of finding the minimum in $U$ for each possible $L$. Finding the minimum in $n-k+1$ elements requires at least $n-k$ comparisons, so every subtree has depth at least $n-k$, and consequently, at least $2^{n-k}$ leaf nodes.
 
-Then the total number of leaf nodes in the decision tree is at least $\binom{n}{k-1} \cdot 2^{n-k}$, so the number of comparisons (i.e. depth) in the worst case is at least $\log \left( \binom{n}{k-1} \cdot 2^{n-k} \right)$.
+	Then the total number of leaf nodes in the decision tree is at least $\binom{n}{k-1} \cdot 2^{n-k}$, so the number of comparisons (i.e. depth) in the worst case is at least $\log \left( \binom{n}{k-1} \cdot 2^{n-k} \right)$.
 
-This value is maximized when $k = n/2$. According to Stirling's approximation, $\binom{n}{n/2} \approx \frac{2^n}{\Theta(\sqrt{n})}$, so we have:
+	This value is maximized when $k = n/2$. According to Stirling's approximation, $\binom{n}{n/2} \approx \frac{2^n}{\Theta(\sqrt{n})}$, so we have:
 
-\[
-  \text{number of comparisons} \geq \log \left( \binom{n}{n/2 - 1} \cdot 2^{n - n/2} \right) = \log \left( \frac{2^n}{\Theta(\sqrt{n})} \cdot 2^{n/2} \right) = \frac{3n}{2} - O(\log n)
-\]
+	\[
+		\text{number of comparisons} \geq \log \left( \binom{n}{n/2 - 1} \cdot 2^{n - n/2} \right) = \log \left( \frac{2^n}{\Theta(\sqrt{n})} \cdot 2^{n/2} \right) = \frac{3n}{2} - O(\log n)
+	\]
 
 \end{proof}
 

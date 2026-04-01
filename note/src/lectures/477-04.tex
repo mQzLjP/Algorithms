@@ -1,9 +1,9 @@
 \chapter{Ring Coloring} \label{chap:ring-coloring}
 
 \begin{definition}[Distributed Computing]
-  A distributed computing system consists of multiple processors (or nodes) that communicate and coordinate their actions by passing messages to achieve a common goal.
+	A distributed computing system consists of multiple processors (or nodes) that communicate and coordinate their actions by passing messages to achieve a common goal.
 
-  The main metric for a distributed algorithm is the number of communication rounds required to complete a task.
+	The main metric for a distributed algorithm is the number of communication rounds required to complete a task.
 \end{definition}
 
 The symmetry breaking problems are fundamental problems in distributed computing where nodes in a network must make decisions that break symmetry among themselves (it's bad if every node makes the same decision.) These problems are crucial for enabling coordination and cooperation in distributed systems.
@@ -11,23 +11,23 @@ The symmetry breaking problems are fundamental problems in distributed computing
 For now, we will focus on the LOCAL model of distributed computing.
 
 \begin{definition}[LOCAL Model]
-  The LOCAL model is a graph $G=(V,E)$, where each node $v \in V$ represents a processor, and edges $E$ represent communication links between processors. In this model, every $v$ is aware of:
-  \begin{itemize}
-    \item $n = |V|$;
-    \item unique $\text{ID}(v) \in [n]$;
-    \item $\deg(v)$;
-    \item possible input values.
-    \end{itemize}
-    Each round, each node can send each neighbor a message (that's why it's called LOCAL.) There's no restriction on message size or local computation time.
+	The LOCAL model is a graph $G=(V,E)$, where each node $v \in V$ represents a processor, and edges $E$ represent communication links between processors. In this model, every $v$ is aware of:
+	\begin{itemize}
+		\item $n = |V|$;
+		\item unique $\text{ID}(v) \in [n]$;
+		\item $\deg(v)$;
+		\item possible input values.
+	\end{itemize}
+	Each round, each node can send each neighbor a message (that's why it's called LOCAL.) There's no restriction on message size or local computation time.
 \end{definition}
 
 
-\begin{question}[3-coloring a Ring]
-  Given a oriented $n$-cycle, assign one of three colors $\{0,1,2\}$ to each node such that no two adjacent nodes share the same color.
-\end{question}
+\begin{problem}[3-coloring a Ring]
+Given a oriented $n$-cycle, assign one of three colors $\{0,1,2\}$ to each node such that no two adjacent nodes share the same color.
+\end{problem}
 
 \begin{remark}
-  We won't pay much attention to 2-coloring even when $n$ is even, because one can prove it takes $\Omega(n)$ rounds in the LOCAL model (see homework.)
+	We won't pay much attention to 2-coloring even when $n$ is even, because one can prove it takes $\Omega(n)$ rounds in the LOCAL model (see homework.)
 \end{remark}
 
 \section{Randomized Approach}
@@ -35,39 +35,39 @@ For now, we will focus on the LOCAL model of distributed computing.
 Suppose the nodes can generate random bits. We can use the following randomized algorithm for any vertex:
 
 \begin{algorithm}[H]
-  \While{true}{
-    randomly pick a color from $\{0,1,2\}$\;
-    \eIf{my color is different from my neighbor's color}{
-      keep my color and terminate\;
-    }{
-      remove my color and try again in the next round\;
-    }
-  }
-  \caption{Randomized 3-coloring Algorithm}
+	\While{true}{
+		randomly pick a color from $\{0,1,2\}$\;
+		\eIf{my color is different from my neighbor's color}{
+			keep my color and terminate\;
+		}{
+			remove my color and try again in the next round\;
+		}
+	}
+	\caption{Randomized 3-coloring Algorithm}
 \end{algorithm}
-  
+
 \begin{theorem}
-  The above randomized algorithm solves the 3-coloring problem in $O(\log n)$ rounds with high probability.
+	The above randomized algorithm solves the 3-coloring problem in $O(\log n)$ rounds with high probability.
 \end{theorem}
 
 \begin{proof}
-  For a vertex $v$, the probability that its two neighbors both pick a different color is $4/9$. Therefore, the probability that $v$ fails to keep its color every round is $5/9$, which gives:
-  \[
-    \Pr[\text{$v$ fails after $t$ rounds}] = \left(\frac{5}{9}\right)^t.
-  \]
+	For a vertex $v$, the probability that its two neighbors both pick a different color is $4/9$. Therefore, the probability that $v$ fails to keep its color every round is $5/9$, which gives:
+	\[
+		\Pr[\text{$v$ fails after $t$ rounds}] = \left(\frac{5}{9}\right)^t.
+	\]
 
-  We want to find $t$ such that this probability is at most $n^{-2}$:
+	We want to find $t$ such that this probability is at most $n^{-2}$:
 
-  \[
-    \left(\frac{5}{9}\right)^t \leq n^{-2} \implies t \geq \frac{2 \log n}{\log(9/5)} = O(\log n).
-  \]
+	\[
+		\left(\frac{5}{9}\right)^t \leq n^{-2} \implies t \geq \frac{2 \log n}{\log(9/5)} = O(\log n).
+	\]
 
-  Applying the union bound over all $n$ vertices, we have:
-  \[
-    \Pr[\text{any vertex fails after $t$ rounds}] = \Pr\left[\bigcup_{v \in V} \text{$v$ fails after $t$ rounds}\right] \leq n \cdot n^{-2} = n^{-1}.
-  \]
+	Applying the union bound over all $n$ vertices, we have:
+	\[
+		\Pr[\text{any vertex fails after $t$ rounds}] = \Pr\left[\bigcup_{v \in V} \text{$v$ fails after $t$ rounds}\right] \leq n \cdot n^{-2} = n^{-1}.
+	\]
 
-  It means with high probability, all vertices succeed within $O(\log n)$ rounds.
+	It means with high probability, all vertices succeed within $O(\log n)$ rounds.
 \end{proof}
 
 It breaks symmetry by using randomness, allowing nodes to make independent decisions. We'll come back to randomized coloring in later lectures.
@@ -79,26 +79,26 @@ Obviously, if the color pallet is as large as the number of vertices, we can eas
 We can make use of this idea and come up with a naive algorithm:
 
 \begin{algorithm}[H]
-  assign my ID as my color\;
-  \For{$i = n$ \KwTo $3$}{
-    \If {my color is $i$}{
-      reassign the minimum color from $\{0,1,2\}$ that is different from my neighbors' colors\;
-    }
-  }
-  \caption{Slow Deterministic 3-coloring Algorithm Using IDs} \label{alg:slow-3-coloring}
+	assign my ID as my color\;
+	\For{$i = n$ \KwTo $3$}{
+		\If {my color is $i$}{
+			reassign the minimum color from $\{0,1,2\}$ that is different from my neighbors' colors\;
+		}
+	}
+	\caption{Slow Deterministic 3-coloring Algorithm Using IDs} \label{alg:slow-3-coloring}
 \end{algorithm}
 
 This algorithm can work, but takes $\Theta(n)$ rounds. However it will be useful in the next algorithm we propose:
 
-For example, for a 256 color pallet, let an vertex has color 22, and its successor has color 0. The binary representation of 22 is 00010110, and that of 0 is 00000000. 
+For example, for a 256 color pallet, let an vertex has color 22, and its successor has color 0. The binary representation of 22 is 00010110, and that of 0 is 00000000.
 
 We're interested in the least significant bit where they differ. In this case, it's the first bit (0-indexed), and the vertex has a 1 at that position. Then we encode the pair (1,1) as the new color of vertex 22.
 
 \begin{lemma}
-  The new color from such encoding is a valid coloring.
+	The new color from such encoding is a valid coloring.
 \end{lemma}
 \begin{proof}
-Suppose two adjacent vertices $u$ and $v$ have the same new color. Then they must differ from their successors at the same bit position $k$, and both have the same bit value $b$ at that position. However, this leads to a contradiction because if $u$ and $v$ differ from their successors at position $k$, then they must have different bits at position $k$ because $v$ is the successor of $u$.
+	Suppose two adjacent vertices $u$ and $v$ have the same new color. Then they must differ from their successors at the same bit position $k$, and both have the same bit value $b$ at that position. However, this leads to a contradiction because if $u$ and $v$ differ from their successors at position $k$, then they must have different bits at position $k$ because $v$ is the successor of $u$.
 \end{proof}
 
 As the location of bits can be encoded in $\log \log 256 = 3$ bits, and the bit value can be encoded in 1 bit, the new color pallet can be represented in 4 bits, and the new color of the vertex above is 0b0011.
@@ -108,114 +108,114 @@ Extending 256 to $n$, we can see that one round of this algorithm can compress t
 When $n$ is 3 bits, the number of the new colors is still 3 bits, so such compression won't work. In this case, we can call Algorithm~\ref{alg:slow-3-coloring} to finish the coloring.
 
 \begin{algorithm}[H]
-  assign my ID as my color\;
-  \While{the number of colors $>8$}{
-    check the least significant bit where my color differs from my successor's color\;
-    suppose it's the $k$-th bit, and I have color bit $b$ at that position\;
-    encode the pair $(k,b)$ into my new color\;
-  }
-  \For{$i = 8$ \KwTo $3$}{
-    \If {my color is $i$}{
-      reassign the minimum color from $\{0,1,2\}$ that is different from my neighbors' colors\;
-    }
-  }
-  \caption{Deterministic 3-coloring Algorithm} \label{alg:det-3-coloring}
+	assign my ID as my color\;
+	\While{the number of colors $>8$}{
+		check the least significant bit where my color differs from my successor's color\;
+		suppose it's the $k$-th bit, and I have color bit $b$ at that position\;
+		encode the pair $(k,b)$ into my new color\;
+	}
+	\For{$i = 8$ \KwTo $3$}{
+		\If {my color is $i$}{
+			reassign the minimum color from $\{0,1,2\}$ that is different from my neighbors' colors\;
+		}
+	}
+	\caption{Deterministic 3-coloring Algorithm} \label{alg:det-3-coloring}
 \end{algorithm}
 
 To analyze the time complexity, we denote the function $f(k)$ as the number of new colors after one round with a color pallet of size $k$. We have:
 
 \[
-  f(k) = \min\{2\lceil \log k \rceil, k-1\}.
+	f(k) = \min\{2\lceil \log k \rceil, k-1\}.
 \]
 
 Then the round of communications is $\min\{t : f^{(t)}(n) = 3\}$. Here, $f^{(t)}$ means applying $f$ for $t$ times.
 
 \begin{lemma}
-  \[
-    f^{(t)}(k) \leq \max\{2(\log^{(t)} k + 2), 8\}.
-  \]
+	\[
+		f^{(t)}(k) \leq \max\{2(\log^{(t)} k + 2), 8\}.
+	\]
 \end{lemma}
 \begin{proof}
-  We prove it by induction on $t$. As $f^{(0)}(k) = k$, the base case holds.
+	We prove it by induction on $t$. As $f^{(0)}(k) = k$, the base case holds.
 
-  Assume it holds for $t-1$, we prove it for $t$:
-  \begin{itemize}
-  \item If $f^{(t-1)}(k) \leq 8$, then
-    \[
-      f^{(t)}(k) = f(f^{(t-1)}(k)) \leq f(8) = 7 \leq \max\{2(\log^{(t)} k + 2), 8\}.
-    \]
-  \item If $f^{(t-1)}(k) > 8$, then
-    \begin{align*}
-      f^{(t)}(k) &= 2 \log(f^{(t-1)}(k)) \\
-      &\leq 2\log(2(\log^{(t-1)} k + 2)) \\
-      &\leq 2\log(4\log^{(t-1)} k) \\
-      &\leq 2(\log^{(t)} k + 2) \\
-    \end{align*}
-  \end{itemize}
+	Assume it holds for $t-1$, we prove it for $t$:
+	\begin{itemize}
+		\item If $f^{(t-1)}(k) \leq 8$, then
+		      \[
+			      f^{(t)}(k) = f(f^{(t-1)}(k)) \leq f(8) = 7 \leq \max\{2(\log^{(t)} k + 2), 8\}.
+		      \]
+		\item If $f^{(t-1)}(k) > 8$, then
+		      \begin{align*}
+			      f^{(t)}(k) & = 2 \log(f^{(t-1)}(k))            \\
+			                 & \leq 2\log(2(\log^{(t-1)} k + 2)) \\
+			                 & \leq 2\log(4\log^{(t-1)} k)       \\
+			                 & \leq 2(\log^{(t)} k + 2)          \\
+		      \end{align*}
+	\end{itemize}
 
-  This completes the proof.
+	This completes the proof.
 \end{proof}
 
 To better represent the time complexity, we define a new function:
 
 \begin{definition}[$\log^*$ Function]
-  The iterated logarithm function $\log^* n$ is defined as the number of times the logarithm function must be applied before the result is less than or equal to 1. Formally,
-  \[
-    \log^* n := \begin{cases}
-      0 & \text{if } n \leq 1, \\
-      1 + \log^*(\log n) & \text{if } n > 1.
-    \end{cases}
-  \]
+	The iterated logarithm function $\log^* n$ is defined as the number of times the logarithm function must be applied before the result is less than or equal to 1. Formally,
+	\[
+		\log^* n := \begin{cases}
+			0                  & \text{if } n \leq 1, \\
+			1 + \log^*(\log n) & \text{if } n > 1.
+		\end{cases}
+	\]
 
-  Equivalently, $\log^* n := \min\{t : \log^{(t)} n \leq 1\}$.
+	Equivalently, $\log^* n := \min\{t : \log^{(t)} n \leq 1\}$.
 \end{definition}
 
 Plugging in the function $\log^*$ to $f^{(t)}(n) = 3$, we have:
 \begin{theorem}
-  The deterministic 3-coloring algorithm runs in $\log^* n + O(1)$ rounds.
+	The deterministic 3-coloring algorithm runs in $\log^* n + O(1)$ rounds.
 \end{theorem}
 
 Can we do better than $O(\log^* n)$ rounds? The answer is no:
 
 \begin{theorem}
-  Any deterministic distributed algorithm that solves the 3-coloring problem on an oriented $n$-cycle will require at least $\frac{1}{2}\log^* n - O(1)$ rounds.
+	Any deterministic distributed algorithm that solves the 3-coloring problem on an oriented $n$-cycle will require at least $\frac{1}{2}\log^* n - O(1)$ rounds.
 \end{theorem}
 \begin{proof}
-  For a node, if it runs for $t$ rounds, it can only see the IDs of nodes within distance $t$. 
-  Therefore, any algorithm is a function of the IDs of $2t+1$ nodes: $f: [n]^{2t+1} \to \{0,1,2\}$.
+	For a node, if it runs for $t$ rounds, it can only see the IDs of nodes within distance $t$.
+	Therefore, any algorithm is a function of the IDs of $2t+1$ nodes: $f: [n]^{2t+1} \to \{0,1,2\}$.
 
-  A coloring function is proper if and only if: $\forall \text{ distinct } x_1, \ldots, x_{2t+2} \in [n], f(x_1, \ldots, x_{2t+1}) \neq f(x_2, \ldots, x_{2t+2})$.
+	A coloring function is proper if and only if: $\forall \text{ distinct } x_1, \ldots, x_{2t+2} \in [n], f(x_1, \ldots, x_{2t+1}) \neq f(x_2, \ldots, x_{2t+2})$.
 
-  Now we don't care about the cases where the inputs are randomly ordered, and just assume the IDs are always in increasing order (if we prove $f$ fails to be proper in this case, it must fail in the general case.)
+	Now we don't care about the cases where the inputs are randomly ordered, and just assume the IDs are always in increasing order (if we prove $f$ fails to be proper in this case, it must fail in the general case.)
 
-  Assume there exists a sorted $l$-arg $c$-coloring scheme $f: [n]^l \to [c]$, so that if $x_1 < x_2 < \ldots < x_{l+1}$, then $f(x_1, \ldots, x_l) \neq f(x_2, \ldots, x_{l+1})$.
+	Assume there exists a sorted $l$-arg $c$-coloring scheme $f: [n]^l \to [c]$, so that if $x_1 < x_2 < \ldots < x_{l+1}$, then $f(x_1, \ldots, x_l) \neq f(x_2, \ldots, x_{l+1})$.
 
-  We can cut the last argument and define a new function $g: [n]^{l-1} \to \mathcal P([c])$ as: ($\mathcal P$ being the power set)
+	We can cut the last argument and define a new function $g: [n]^{l-1} \to \mathcal P([c])$ as: ($\mathcal P$ being the power set)
 
-  \[
-    g(x_1, \ldots, x_{l-1}) = \{f(x_1, \ldots, x_{l-1}, x_l) : x_l > x_{l-1}\}.
-  \]
+	\[
+		g(x_1, \ldots, x_{l-1}) = \{f(x_1, \ldots, x_{l-1}, x_l) : x_l > x_{l-1}\}.
+	\]
 
-  One can verify that $g$ is a sorted $(l-1)$-arg $2^{c}$-coloring scheme: 
+	One can verify that $g$ is a sorted $(l-1)$-arg $2^{c}$-coloring scheme:
 
-  \begin{enumerate}
-    \item there are $l-1$ arguments; 
-    \item the output is a subset of $[c]$, so there are at most $2^c$ possible outputs;
-    \item for any $x_1 < x_2 < \ldots < x_l$, if $g(x_1, \ldots, x_{l-1}) = g(x_2, \ldots, x_l)$, from $f(x_1,x_2,\ldots,x_l) \in g(x_1,\ldots,x_{l-1})$, we have $f(x_1,x_2,\ldots,x_l) \in g(x_2,\ldots,x_l)$, so there exists $x_{l+1} > x_l$ such that $f(x_1,x_2,\ldots,x_l) = f(x_2,x_3,\ldots,x_{l+1})$, contradicting the property of $f$.
-  \end{enumerate}
+	\begin{enumerate}
+		\item there are $l-1$ arguments;
+		\item the output is a subset of $[c]$, so there are at most $2^c$ possible outputs;
+		\item for any $x_1 < x_2 < \ldots < x_l$, if $g(x_1, \ldots, x_{l-1}) = g(x_2, \ldots, x_l)$, from $f(x_1,x_2,\ldots,x_l) \in g(x_1,\ldots,x_{l-1})$, we have $f(x_1,x_2,\ldots,x_l) \in g(x_2,\ldots,x_l)$, so there exists $x_{l+1} > x_l$ such that $f(x_1,x_2,\ldots,x_l) = f(x_2,x_3,\ldots,x_{l+1})$, contradicting the property of $f$.
+	\end{enumerate}
 
-  Then starting from a $l$-arg 3-coloring scheme, we can apply the above process $t-1$ times to get a 1-arg $2^{2^{\ldots^{2^3}}}$-coloring scheme (with $l-1$ layers of 2s).
+	Then starting from a $l$-arg 3-coloring scheme, we can apply the above process $t-1$ times to get a 1-arg $2^{2^{\ldots^{2^3}}}$-coloring scheme (with $l-1$ layers of 2s).
 
-  As we know from Pigeonhole Principle that there's no 1-arg $c$-coloring scheme when $c < n$, we have:
+	As we know from Pigeonhole Principle that there's no 1-arg $c$-coloring scheme when $c < n$, we have:
 
-  \[2^{2^{\ldots^{2^3}}} \geq n \Rightarrow l - 1 \geq \log^* n - O(1) \Rightarrow t \geq \frac{1}{2}\log^* n - O(1) (\text{as }l = 2t+1).
-  \]
+	\[2^{2^{\ldots^{2^3}}} \geq n \Rightarrow l - 1 \geq \log^* n - O(1) \Rightarrow t \geq \frac{1}{2}\log^* n - O(1) (\text{as }l = 2t+1).
+	\]
 \end{proof}
 
 \begin{remark}
-  The scriber's answer to after-class questions, not necessarily correct:
-  \begin{enumerate}
-    \item The factor 2 discrepancy between the upper bound $\log^* n + O(1)$ and the lower bound $\frac{1}{2}\log^* n - O(1)$ comes from the difference that we only see the ID of one side when proving the upper bound, but state that we can see the ID on both sides when proving the lower bound.
-    \item If we prove without the criterion of sorted IDs, the lower bound proof will be incorrect at the step of proving $g(x_1, \ldots, x_{l-1}) \neq g(x_2, \ldots, x_l)$. One can break this step by letting $x_{l+1} = x_1$.
-  \end{enumerate}
+	The scriber's answer to after-class questions, not necessarily correct:
+	\begin{enumerate}
+		\item The factor 2 discrepancy between the upper bound $\log^* n + O(1)$ and the lower bound $\frac{1}{2}\log^* n - O(1)$ comes from the difference that we only see the ID of one side when proving the upper bound, but state that we can see the ID on both sides when proving the lower bound.
+		\item If we prove without the criterion of sorted IDs, the lower bound proof will be incorrect at the step of proving $g(x_1, \ldots, x_{l-1}) \neq g(x_2, \ldots, x_l)$. One can break this step by letting $x_{l+1} = x_1$.
+	\end{enumerate}
 \end{remark}

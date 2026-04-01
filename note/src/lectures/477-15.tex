@@ -3,9 +3,9 @@
 In Section~\ref{section:get-rid-negative-weight-edges}, we proposed a price function by applying Bellman-Ford on the original graph. Combined with Dijkstra's Algorithm, we boost the efficiency of APSP. However, for SSSP, finding the price function itself becomes a bottleneck. In this section, we will introduce Goldberg's algorithm, which is a more efficient way to find the price function in some cases.
 
 Here we list the price function problem again with some extra parameters:
-\begin{question}[Price Function Problem]
+\begin{problem}[Price Function Problem]
 	Given a directed graph $G = (V, E, \ell)$ with edge weights $\ell: E\to \{-W, -W+1, \ldots, W\}$, find a price function $p: V\mapsto \mathbb{Z}$ such that for every edge $(u, v)\in E$, we have $\ell_p(u,v) = \ell(u,v) + p(u) - p(v) \geq 0$.
-\end{question}
+\end{problem}
 \begin{theorem}
 	Goldberg's algorithm can solve the price function problem in $O(m\sqrt{n}\log W)$ time.
 \end{theorem}

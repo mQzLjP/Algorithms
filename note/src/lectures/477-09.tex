@@ -18,9 +18,9 @@ One can prove that the $s$-$t$ shortest path (where both $s$ and $t$ are given) 
 
 \section{SSSP: Bellman-Ford Algorithm}
 
-\begin{question}
-	Given a graph $G = (V, E)$, a length function $\ell: E \to \mathbb{R}$ and a source vertex $s \in V$, how to find the shortest path from $s$ to all other vertices?
-\end{question}
+\begin{problem}
+Given a graph $G = (V, E)$, a length function $\ell: E \to \mathbb{R}$ and a source vertex $s \in V$, how to find the shortest path from $s$ to all other vertices?
+\end{problem}
 
 A naive recursive relation is $\text{dist}(s, t) = \min_{(u, t) \in E} (\text{dist}(s, u) + \ell(u, t))$ for $t \neq s$ and $\text{dist}(s, s) = 0$. However, this recursive relation is not quite correct as there exists some circular dependencies.
 
@@ -44,9 +44,9 @@ Therefore, we can compute $\text{dist}^{(i)}(s, t)$ for $i = 0, 1, \ldots, n-1$ 
 
 \section{APSP: Floyd-Warshall Algorithm}
 
-\begin{question}
-	Given a graph $G = (V, E)$ and a length function $\ell: E \to \mathbb{R}$, how to find the shortest path between every pair of vertices?
-\end{question}
+\begin{problem}
+Given a graph $G = (V, E)$ and a length function $\ell: E \to \mathbb{R}$, how to find the shortest path between every pair of vertices?
+\end{problem}
 
 If we apply the Bellman-Ford algorithm for each vertex as the source, we can find the shortest path between every pair of vertices in $O(n^2 m) = O(n^4)$ time. However we can find a recursion that converges in a more aggressive way.
 

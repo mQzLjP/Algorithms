@@ -1,4 +1,4 @@
-\chapter{Max Flow}
+\chapter{Max Flow} \label{chap:maxflow}
 
 \begin{definition}[Flow Network]
 	A \textbf{flow network} is a directed graph $G = (V, E, c)$ with two special vertices $s$ and $t$ called the \textbf{source} and \textbf{sink}, respectively. $c: E \to \mathbb{Z}^+$ is a function that assigns a non-negative integer capacity to each edge.
@@ -112,9 +112,9 @@ It means that the number of iterations is at most $O(m \log v(f_{\max}))$, so th
 
 \section{Examples using Max Flow}
 
-\begin{question}[Max Matching in Bipartite Graph]
-	Given a bipartite graph $G = (V, E)$ with $V = L \cup R$, find the maximum matching in $G$.
-\end{question}
+\begin{problem}[Max Matching in Bipartite Graph]
+Given a bipartite graph $G = (V, E)$ with $V = L \cup R$, find the maximum matching in $G$.
+\end{problem}
 
 One can use it to prove Hall's theorem:
 \begin{theorem}[Hall's Theorem]

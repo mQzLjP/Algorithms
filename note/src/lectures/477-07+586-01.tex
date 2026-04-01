@@ -4,28 +4,28 @@ We shall investigate how to multiply two polynomial in a fast way step by step i
 
 \section{Problem Definition}
 
-\begin{question}
-	Let \( A, B, C \in \CC[X] \).
-	\begin{itemize}
-		\item \textbf{Input}: \( \{a_0, \ldots, a_{n-1}\}, \; \{b_0, \ldots, b_{n-1}\} \)
-		      \begin{itemize}
-			      \item assume \( n \) is the power of \( 2 \).
-			      \item such represents the coefficients of the polynomial:
-			            \[
-				            A(x)= \sum_{i=0}^{n-1}a_i x^i \quad B(x) = \sum_{i=0}^{n-1}b_i x^i
-			            \]
-		      \end{itemize}
-		\item \textbf{Output}: compute:
-		      \[
-			      C(x) = A(x)B(x) = \sum_{i=0}^{\mathbf{2n-2}}c_i x^i
-		      \]
+\begin{problem}
+Let \( A, B, C \in \CC[X] \).
+\begin{itemize}
+	\item \textbf{Input}: \( \{a_0, \ldots, a_{n-1}\}, \; \{b_0, \ldots, b_{n-1}\} \)
+	      \begin{itemize}
+		      \item assume \( n \) is the power of \( 2 \).
+		      \item such represents the coefficients of the polynomial:
+		            \[
+			            A(x)= \sum_{i=0}^{n-1}a_i x^i \quad B(x) = \sum_{i=0}^{n-1}b_i x^i
+		            \]
+	      \end{itemize}
+	\item \textbf{Output}: compute:
+	      \[
+		      C(x) = A(x)B(x) = \sum_{i=0}^{\mathbf{2n-2}}c_i x^i
+	      \]
 
-		      such problem of computing \( \{c_i\}_{i=0}^{2n-2} \) is called \underline{convolution}. Observe that:
-		      \[
-			      c_i = \sum_{0\leq j \leq i} a_j b_{i-j}
-		      \]
-	\end{itemize}
-\end{question}
+	      such problem of computing \( \{c_i\}_{i=0}^{2n-2} \) is called \underline{convolution}. Observe that:
+	      \[
+		      c_i = \sum_{0\leq j \leq i} a_j b_{i-j}
+	      \]
+\end{itemize}
+\end{problem}
 
 We note that for basic computing:
 \begin{itemize}

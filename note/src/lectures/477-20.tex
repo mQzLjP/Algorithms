@@ -1,0 +1,51 @@
+\chapter{Randomized Global Min Cut}
+
+\begin{problem}[Global Min Cut]
+Given an undirected graph $G = (V,E,c)$, find a cut $(X, V\setminus X)$ that minimizes the total weight of edges crossing the cut, i.e., $\sum_{e \in E(X, V\setminus X)} c(e)$.
+\end{problem}
+
+With algorithms of $s$-$t$ min cut as a subroutine, we can solve the global min cut problem by running $s$-$t$ min cut for a fixed $s$ and all $t \in V\setminus \{s\}$, and taking the minimum among these cuts. This approach has a time complexity of $O(n)$ times the time complexity of the $s$-$t$ min cut algorithm, i.e. for general graphs, $n\cdot O(\min\{Cmn, mn^2\})$, and for unit capacity graphs, $n\cdot O(\min\{m^{3/2}, mn^{2/3}\})$. The implementations and proofs are done in Chapter~\ref{chap:maxflow}.
+
+However, we hope to solve global min cut without specifying some $s$ and $t$.
+
+Here we focus on unit capacity graphs.
+As shown in homework,
+\begin{lemma}
+	Let $(X, V\setminus X)$ be one of the global min cuts.
+	The number of edges that cross the cut $(X, V\setminus X)$ is at most $2m/n$.
+\end{lemma}
+\begin{proof}
+	\[
+		\text{number of edges crossing the cut} \leq \min_{u\in V}\{\deg(u)\}
+		\leq \text{average degree} = \frac{2m}{n}.
+	\]
+\end{proof}
+
+\section{Karger's Random Contraction Algorithm}
+
+Random contraction is a simple randomized algorithm for finding a global min cut. The algorithm works as follows:
+\begin{itemize}
+	\item pick a random edge
+	\item contract it
+	\item repeat until only two vertices remain
+	\item the remaining two vertices represent a cut, and we return it.
+\end{itemize}
+
+\section{Galton and Watson's Problem}
+
+Galton and Watson's problem is a classic problem in probability theory that models the extinction of family names. The problem can be stated as follows:
+
+\begin{problem}[Galton and Watson's Problem]
+Generation 0 starts with a single individual. Each individual in generation $i$ produces $\zeta\in \{0,1,2,\ldots\}$ offspring in generation $i+1$, where $\zeta$ is a random variable with a given distribution. The process continues indefinitely. What is the probability that the family name eventually becomes extinct?
+\end{problem}
+
+Denote $X_i$ as the number of individuals in generation $i$. We state here, without proof, the following result:
+
+\begin{theorem}[Galton and Watson's Theorem] \label{thm:gw}
+	Denote $\mu = \E[\zeta]$ as the expected number of offspring per individual. Then eventual extinction ($X_i = 0$ for some $i$) occurs
+	\begin{itemize}
+		\item with probability 1 if $\mu < 1$;
+		\item with probability 1 if $\mu = 1$ unless $\Pr(\zeta = 1) = 1$ (in which case it's 0);
+		\item with probability $1-c$ if $\mu > 1$, where $c$ depends on the distribution of $\zeta$.
+	\end{itemize}
+\end{theorem}

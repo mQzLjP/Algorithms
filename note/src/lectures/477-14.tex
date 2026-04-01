@@ -1,30 +1,30 @@
 \chapter{Assignment Problem: Hungarian Algorithm}
 
-\begin{question}[Assignment Problem (Bipartite Min Cost Perfect Matching)]
-	Given a bipartite graph \( G = (U\cup V, E) \) with \( |U| = |V| = n \) and a cost function \( c: E \to \mathbb{R} \), find a perfect matching \( M \subseteq E \) that minimizes the total cost \( \sum_{e \in M} c(e) \).
-\end{question}
+\begin{problem}[Assignment Problem (Bipartite Min Cost Perfect Matching)]
+Given a bipartite graph \( G = (U\cup V, E) \) with \( |U| = |V| = n \) and a cost function \( c: E \to \mathbb{R} \), find a perfect matching \( M \subseteq E \) that minimizes the total cost \( \sum_{e \in M} c(e) \).
+\end{problem}
 
 \section{LP and Dual LP}
 
 The LP relaxation of the assignment problem can be formulated as follows:
 
-\begin{question}
-	Minimize \( \sum_{e \in E} c(e) x(e) \) subject to:
-	\begin{align*}
-		\forall u \in U, \quad & \sum_{(u,v)\in E} x(e) = 1, \\
-		\forall v \in V, \quad & \sum_{(u,v)\in E} x(e) = 1, \\
-		\forall e \in E, \quad & x(e) \geq 0.
-	\end{align*}
-\end{question}
+\begin{problem}
+Minimize \( \sum_{e \in E} c(e) x(e) \) subject to:
+\begin{align*}
+	\forall u \in U, \quad & \sum_{(u,v)\in E} x(e) = 1, \\
+	\forall v \in V, \quad & \sum_{(u,v)\in E} x(e) = 1, \\
+	\forall e \in E, \quad & x(e) \geq 0.
+\end{align*}
+\end{problem}
 
 The Dual LP, then, can be formulated as:
 
-\begin{question}
-	Maximize \( \sum_{v \in U\cup V} y(v) \) subject to:
-	\begin{align*}
-		\forall e = (u,v) \in E, \quad & y(u) + y(v) \leq c(e).
-	\end{align*}
-\end{question}
+\begin{problem}
+Maximize \( \sum_{v \in U\cup V} y(v) \) subject to:
+\begin{align*}
+	\forall e = (u,v) \in E, \quad & y(u) + y(v) \leq c(e).
+\end{align*}
+\end{problem}
 
 To solve the LP, note that if we have a bipartite graph with some zero edges, we should try to find a perfect matching using only zero edges. If we can find such a perfect matching, then we are done.
 

@@ -14,9 +14,9 @@ Still, the last two properties hold for polynomials over $\mathbb Z_p$, i.e. it 
 
 \section{Equality Testing}
 
-\begin{question}
-	Alice and Bob each have a string of length $n$ with alphabet $\Sigma$, and they want to determine if their strings are the same. They can only communicate by sending bits to each other, and they want to minimize the number of bits sent. How can they do this efficiently?
-\end{question}
+\begin{problem}
+Alice and Bob each have a string of length $n$ with alphabet $\Sigma$, and they want to determine if their strings are the same. They can only communicate by sending bits to each other, and they want to minimize the number of bits sent. How can they do this efficiently?
+\end{problem}
 
 A naive solution is to send the entire string, which requires $O(n)$ bits (very large).
 
@@ -48,9 +48,9 @@ With a message size of $O(\log p) = O(\log n)$, Algorithm~\ref{alg:karp-rabin-eq
 
 \section{String Matching}
 
-\begin{question}
-	Given a text string $T$ of length $n$ and a pattern string $P$ of length $m$ ($m<n$), determine if $P$ is a substring of $T$.
-\end{question}
+\begin{problem}
+Given a text string $T$ of length $n$ and a pattern string $P$ of length $m$ ($m<n$), determine if $P$ is a substring of $T$.
+\end{problem}
 
 Intuitively, we can apply equality testing to each substring of $T$ of length $m$, which leads to a time complexity of $O(nm)$. Our target here is to achieve a time complexity of $O(n)$.
 

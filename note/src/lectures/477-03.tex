@@ -1,134 +1,134 @@
 \section{Amortized Analysis}
 
-\begin{question}[List Update Problem]
-  We have a list $L$ of $n$ items. Each time we want to access an item, we pay the cost equal to its position in the list (the first item costs 1, the second item costs 2, etc.). After accessing an item, we can move it closer to the front of the list at no cost. What is a good strategy to minimize the total access cost over a sequence of accesses $\sigma \in [n]^m$?
-\end{question}
+\begin{problem}[List Update Problem]
+We have a list $L$ of $n$ items. Each time we want to access an item, we pay the cost equal to its position in the list (the first item costs 1, the second item costs 2, etc.). After accessing an item, we can move it closer to the front of the list at no cost. What is a good strategy to minimize the total access cost over a sequence of accesses $\sigma \in [n]^m$?
+\end{problem}
 
 Here we present some example strategies:
 
 \begin{enumerate}
-  \item \textbf{Do Not Update (DNU)}: Never move any item after access.
+	\item \textbf{Do Not Update (DNU)}: Never move any item after access.
 
-    We easily see that $\cost_{\text{DNU}}(\sigma) \leq m \cdot n$ and $\cost_{\OPT} \geq m$ with $\sigma = n^m$, so the competitive ratio is at most $n$.
-  \item \textbf{Sort by Access Frequency (SbAF)}: After each access, sort the list in decreasing order of access frequency.
+	      We easily see that $\cost_{\text{DNU}}(\sigma) \leq m \cdot n$ and $\cost_{\OPT} \geq m$ with $\sigma = n^m$, so the competitive ratio is at most $n$.
+	\item \textbf{Sort by Access Frequency (SbAF)}: After each access, sort the list in decreasing order of access frequency.
 
-    Consider the sequence $\sigma = 1^n 2^n \cdots n^n$. The cost of SbAF is $\cost_{\text{SbAF}}(\sigma) = \Theta(n^3)$, as the order will remain the same throughout the accesses. However, the optimal offline algorithm can put every element to the front of the list the first time it is accessed, resulting in $\cost_{\OPT}(\sigma) = \Theta(n^2)$. Thus, the competitive ratio is at least $\Omega(n)$.
-  \item \textbf{SWAP}: Move the accessed element one position closer to the front by swapping it with the element before it.
+	      Consider the sequence $\sigma = 1^n 2^n \cdots n^n$. The cost of SbAF is $\cost_{\text{SbAF}}(\sigma) = \Theta(n^3)$, as the order will remain the same throughout the accesses. However, the optimal offline algorithm can put every element to the front of the list the first time it is accessed, resulting in $\cost_{\OPT}(\sigma) = \Theta(n^2)$. Thus, the competitive ratio is at least $\Omega(n)$.
+	\item \textbf{SWAP}: Move the accessed element one position closer to the front by swapping it with the element before it.
 
-    Consider the sequence $\sigma = (n, n-1)^{\frac{m}{2}}$. The cost of SWAP is $\cost_{\text{SWAP}}(\sigma) = m\cdot n$, as the accessed element will always be at the end of the list. The optimal algorithm can instead put $n$ and $n-1$ to the front two positions of the list in the first two accesses, and keep them there, resulting in $\cost_{\OPT}(\sigma) = 1.5m+2n-1$. Thus, the competitive ratio is at least $\Omega(n)$.
-  \item \textbf{Move To Front (MTF)}: After accessing an item, move it to the front of the list.
+	      Consider the sequence $\sigma = (n, n-1)^{\frac{m}{2}}$. The cost of SWAP is $\cost_{\text{SWAP}}(\sigma) = m\cdot n$, as the accessed element will always be at the end of the list. The optimal algorithm can instead put $n$ and $n-1$ to the front two positions of the list in the first two accesses, and keep them there, resulting in $\cost_{\OPT}(\sigma) = 1.5m+2n-1$. Thus, the competitive ratio is at least $\Omega(n)$.
+	\item \textbf{Move To Front (MTF)}: After accessing an item, move it to the front of the list.
 
 \end{enumerate}
 
 \begin{theorem}
-  MTF is 2-competitive for the List Update Problem.
+	MTF is 2-competitive for the List Update Problem.
 \end{theorem}
 
 We want to show, intuitively, that $\cost_{\text{MTF}}(\sigma) \leq 2 \cdot \cost_{\OPT}(\sigma)$ ``on average'' (amortized over a sequence of operations). To do this, we will use the potential method.
 
 \begin{proof}
-Define the potential function $\Phi$ as follows. Let $L_{\text{MTF}}$ and $L_{\OPT}$ be the lists maintained by MTF and OPT respectively after some accesses. For each pair of items $(i, j)$, define an inversion if $i$ appears before $j$ in $L_{\text{MTF}}$ but after $j$ in $L_{\OPT}$. Let $\Phi$ be the number of inversions between $L_{\text{MTF}}$ and $L_{\OPT}$. Let $\Phi_i$ be the value of the potential function after the $i$-th access. Naturally $\Phi_0 = 0, \Phi_m \geq 0$.
+	Define the potential function $\Phi$ as follows. Let $L_{\text{MTF}}$ and $L_{\OPT}$ be the lists maintained by MTF and OPT respectively after some accesses. For each pair of items $(i, j)$, define an inversion if $i$ appears before $j$ in $L_{\text{MTF}}$ but after $j$ in $L_{\OPT}$. Let $\Phi$ be the number of inversions between $L_{\text{MTF}}$ and $L_{\OPT}$. Let $\Phi_i$ be the value of the potential function after the $i$-th access. Naturally $\Phi_0 = 0, \Phi_m \geq 0$.
 
-Denote $c_i$ as the cost of MTF for the $i$-th access.
+	Denote $c_i$ as the cost of MTF for the $i$-th access.
 
-Now, let $a_i := c_i + \Phi_i - \Phi_{i-1}$ be the amortized cost of the $i$-th access. Summing over all accesses, we have
+	Now, let $a_i := c_i + \Phi_i - \Phi_{i-1}$ be the amortized cost of the $i$-th access. Summing over all accesses, we have
 
-\[ \sum_{i=1}^m a_i = \sum_{i=1}^m c_i + \Phi_m - \Phi_0 \geq \cost_{\text{MTF}}(\sigma). \]
+	\[ \sum_{i=1}^m a_i = \sum_{i=1}^m c_i + \Phi_m - \Phi_0 \geq \cost_{\text{MTF}}(\sigma). \]
 
-Consider the $i$-th access, where MTF accesses item $\sigma(i)$. Denote $S$ as the set before $\sigma(i)$ in $L_\text{MTF}$ and before $\sigma(i)$ in $L_\text{OPT}$, and $T$ as the set before $\sigma(i)$ in $L_\text{MTF}$ and after $\sigma(i)$ in $L_\text{OPT}$.
-The cost of accessing $\sigma(i)$ in MTF, therefore, is $|S|+|T|+1$.
+	Consider the $i$-th access, where MTF accesses item $\sigma(i)$. Denote $S$ as the set before $\sigma(i)$ in $L_\text{MTF}$ and before $\sigma(i)$ in $L_\text{OPT}$, and $T$ as the set before $\sigma(i)$ in $L_\text{MTF}$ and after $\sigma(i)$ in $L_\text{OPT}$.
+	The cost of accessing $\sigma(i)$ in MTF, therefore, is $|S|+|T|+1$.
 
-To calculate the change in potential, we consider two parts: the change due to moving $\sigma(i)$ to the front in MTF, and the change due to OPT's access.
+	To calculate the change in potential, we consider two parts: the change due to moving $\sigma(i)$ to the front in MTF, and the change due to OPT's access.
 
-\begin{itemize}
-  \item \textbf{Change due to MTF's move:} When MTF moves $\sigma(i)$ to the front, all inversions involving $\sigma(i)$ and items in $S$ are created, as these elements are before $\sigma(i)$ in the original OPT but after $\sigma(i)$ in the new MTF. On the other hand, all inversions involving $\sigma(i)$ and items in $T$ are resolved, as these elements are after $\sigma(i)$ in the original OPT, and also after $\sigma(i)$ in the new MTF. Therefore, the change in potential due to MTF's move is $|S| - |T|$.
-  \item \textbf{Change due to OPT's access:} $\OPT$ will either leave $\sigma(i)$ it in place, or move it to a closer front. In the first case, the change in potential due to this access is 0. In the second case, for any element that is originally in front of $\sigma(i)$ in OPT but after $\sigma(i)$ after the movement, their relative position in $L_{\text{MTF}}$ and $L_{\OPT}$ after both moves will be the same (both after $\sigma(i)$). Therefore, there will be no newly-created inversions due to OPT's access, so the change in potential due to OPT's access is negative ($\leq 0$).
-\end{itemize}
+	\begin{itemize}
+		\item \textbf{Change due to MTF's move:} When MTF moves $\sigma(i)$ to the front, all inversions involving $\sigma(i)$ and items in $S$ are created, as these elements are before $\sigma(i)$ in the original OPT but after $\sigma(i)$ in the new MTF. On the other hand, all inversions involving $\sigma(i)$ and items in $T$ are resolved, as these elements are after $\sigma(i)$ in the original OPT, and also after $\sigma(i)$ in the new MTF. Therefore, the change in potential due to MTF's move is $|S| - |T|$.
+		\item \textbf{Change due to OPT's access:} $\OPT$ will either leave $\sigma(i)$ it in place, or move it to a closer front. In the first case, the change in potential due to this access is 0. In the second case, for any element that is originally in front of $\sigma(i)$ in OPT but after $\sigma(i)$ after the movement, their relative position in $L_{\text{MTF}}$ and $L_{\OPT}$ after both moves will be the same (both after $\sigma(i)$). Therefore, there will be no newly-created inversions due to OPT's access, so the change in potential due to OPT's access is negative ($\leq 0$).
+	\end{itemize}
 
-Adding these two parts together, we have
+	Adding these two parts together, we have
 
-\[ a_i = c_i + \Phi_i - \Phi_{i-1} \leq (|S| + |T| + 1) + (|S| - |T|) = 2|S| + 1. \]
+	\[ a_i = c_i + \Phi_i - \Phi_{i-1} \leq (|S| + |T| + 1) + (|S| - |T|) = 2|S| + 1. \]
 
-As accessing $\sigma(i)$ in OPT costs at least $|S| + 1$, we have
+	As accessing $\sigma(i)$ in OPT costs at least $|S| + 1$, we have
 
-\[ a_i \leq 2(|S| + 1) \leq 2 \cdot \cost_{\OPT}(\sigma(i)) \Rightarrow \cost_{\text{MTF}}(\sigma) \leq \sum_{i=1}^m a_i \leq 2 \cdot \cost_{\OPT}(\sigma). \]
+	\[ a_i \leq 2(|S| + 1) \leq 2 \cdot \cost_{\OPT}(\sigma(i)) \Rightarrow \cost_{\text{MTF}}(\sigma) \leq \sum_{i=1}^m a_i \leq 2 \cdot \cost_{\OPT}(\sigma). \]
 \end{proof}
 
 \section{Resource-augmented Competitive Analysis}
 
-\begin{question}[Cache Eviction Policy]
-  For each memory access to a page $j$:
-  \begin {itemize}
-    \item If $j$ is in cache, access it at no cost.
-    \item If $j$ is not in cache, pay cost 1 to load it into cache. If the cache is full, evict some page from the cache to make space for $j$.
-  \end{itemize}
-  What is a good eviction policy to minimize the total cost over a sequence of accesses?
-\end{question}
+\begin{problem}[Cache Eviction Policy]
+For each memory access to a page $j$:
+\begin {itemize}
+\item If $j$ is in cache, access it at no cost.
+\item If $j$ is not in cache, pay cost 1 to load it into cache. If the cache is full, evict some page from the cache to make space for $j$.
+\end{itemize}
+What is a good eviction policy to minimize the total cost over a sequence of accesses?
+\end{problem}
 
 We first state without proof (one can prove it with some tedious effort):
 
 \begin{theorem}
-  The optimal offline algorithm evicts the page that will not be accessed for the longest time in the future (i.e. accessed furthest in the future).
+	The optimal offline algorithm evicts the page that will not be accessed for the longest time in the future (i.e. accessed furthest in the future).
 \end{theorem}
 
 Also we list some of the commonly seen policies:
 
 \begin{itemize}
-  \item \textbf{Flush when Full (FLF)}: Evict all pages in the cache when a page fault occurs.
-  \item \textbf{First In First Out (FIFO)}: Evict the page that has been in the cache the longest.
-  \item \textbf{Least Recently Used (LRU)}: Evict the page that was accessed least recently.
-  \item \textbf{Least Frequently Used (LFU)}: Evict the page that has been accessed least frequently.
+	\item \textbf{Flush when Full (FLF)}: Evict all pages in the cache when a page fault occurs.
+	\item \textbf{First In First Out (FIFO)}: Evict the page that has been in the cache the longest.
+	\item \textbf{Least Recently Used (LRU)}: Evict the page that was accessed least recently.
+	\item \textbf{Least Frequently Used (LFU)}: Evict the page that has been accessed least frequently.
 \end{itemize}
 
 However, we know (unfortunately) that all of these policies can have a very bad competitive ratio:
 
 \begin{theorem}
-  Any deterministic online algorithm for the Cache Eviction Problem has a competitive ratio of at least $k$, where $k$ is the cache size.
+	Any deterministic online algorithm for the Cache Eviction Problem has a competitive ratio of at least $k$, where $k$ is the cache size.
 \end{theorem}
 
 \begin{proof}
-  Consider pages $\{1,2,\ldots,k+1\}$ and a cache of size $k$. 
+	Consider pages $\{1,2,\ldots,k+1\}$ and a cache of size $k$.
 
-  The adversary can always request the page that was just evicted by the online algorithm. Therefore, the online algorithm will incur a cost of 1 for every access, resulting in a total cost of $m$ for a sequence of $m$ accesses.
+	The adversary can always request the page that was just evicted by the online algorithm. Therefore, the online algorithm will incur a cost of 1 for every access, resulting in a total cost of $m$ for a sequence of $m$ accesses.
 
-  On the other hand, the optimal policy can ensure that there will be at least $k-1$ hits before a cache miss (ignoring the first $k$ accesses to fill the cache). The reason is that whenever the policy evicts $j$ due to a cache miss, we can be sure that $j$ is the last page in the current cache that will be accessed, i.e., all other $k-1$ pages will be accessed at least once before the next cache missed due to $j$. Therefore, the total cost incurred by the optimal policy is at most $k+1+\frac{m-k}{k}$.
+	On the other hand, the optimal policy can ensure that there will be at least $k-1$ hits before a cache miss (ignoring the first $k$ accesses to fill the cache). The reason is that whenever the policy evicts $j$ due to a cache miss, we can be sure that $j$ is the last page in the current cache that will be accessed, i.e., all other $k-1$ pages will be accessed at least once before the next cache missed due to $j$. Therefore, the total cost incurred by the optimal policy is at most $k+1+\frac{m-k}{k}$.
 
-  The limit of performance ratio as $m \to \infty$ is therefore
-  \[ \lim_{m \to \infty} \frac{m}{k+1+\frac{m-k}{k}} = k. \]
+	The limit of performance ratio as $m \to \infty$ is therefore
+	\[ \lim_{m \to \infty} \frac{m}{k+1+\frac{m-k}{k}} = k. \]
 \end{proof}
 
 When OPT is too powerful, we can either design a randomized algorithm, or allow the online algorithm to have a larger cache size than OPT. This is called resource-augmented competitive analysis.
 
 \begin{definition}[Resource-augmented Competitive Analysis]
-  An online algorithm $A$ with parameter $k$ can be compared to an optimal offline algorithm $\OPT$ with parameter $k_{\OPT} < k$. We say that $A$ is $c$-competitive with resource augmentation if for any input sequence $\sigma$,
+	An online algorithm $A$ with parameter $k$ can be compared to an optimal offline algorithm $\OPT$ with parameter $k_{\OPT} < k$. We say that $A$ is $c$-competitive with resource augmentation if for any input sequence $\sigma$,
 
-  \[ \cost_A(k) \leq c \cdot \cost_{\OPT}(k_{\OPT}) \]
+	\[ \cost_A(k) \leq c \cdot \cost_{\OPT}(k_{\OPT}) \]
 \end{definition}
 
 \begin{theorem}
-  LRU is $\frac{k}{k - k_{\OPT} + 1}$-competitive with resource augmentation.
+	LRU is $\frac{k}{k - k_{\OPT} + 1}$-competitive with resource augmentation.
 \end{theorem}
 
 \begin{proof}
-We split the access sequence to different intervals $I_\OPT, I_1, I_2, \ldots, I_m$ as follows. $I_\OPT$ is the maximal prefix of the access sequence such that $\OPT$ incurs no cost in $I_\OPT$, i.e. $I_\OPT$ contains only accesses to the first $k_{\OPT}$ distinct pages. After that, we split the remaining access sequence into intervals $I_1, I_2, \ldots, I_m$ such that each interval $I_j$ has exactly $k$ cache misses for LRU, except possibly the last interval $I_m$ which may have fewer than $k$ cache misses (we don't care).
+	We split the access sequence to different intervals $I_\OPT, I_1, I_2, \ldots, I_m$ as follows. $I_\OPT$ is the maximal prefix of the access sequence such that $\OPT$ incurs no cost in $I_\OPT$, i.e. $I_\OPT$ contains only accesses to the first $k_{\OPT}$ distinct pages. After that, we split the remaining access sequence into intervals $I_1, I_2, \ldots, I_m$ such that each interval $I_j$ has exactly $k$ cache misses for LRU, except possibly the last interval $I_m$ which may have fewer than $k$ cache misses (we don't care).
 
-Now we'll just focus on one interval $I_j$. Denote the last page accessed before $I_j$ is $p$.
-There're three cases regarding the behavior of LRU:
-\begin{enumerate}
-  \item There's at least one page that leads to 2 misses. Then, there're at least $k+1$ distinct pages accessed in $I_j$. Otherwise, the second access to that page will be a hit.
-  \item There's a miss when accessing $p$. Then, there're at least $k+1$ distinct pages accessed in $I_j$, as $p$ is not in the cache by the time of access.
-  \item Both of the above do not happen. Then, every page is accessed at most once in $I_j$, and $p$ is in the cache when accessed. Therefore, there're exactly $k$ distinct pages other than $p$.
-\end{enumerate}
+	Now we'll just focus on one interval $I_j$. Denote the last page accessed before $I_j$ is $p$.
+	There're three cases regarding the behavior of LRU:
+	\begin{enumerate}
+		\item There's at least one page that leads to 2 misses. Then, there're at least $k+1$ distinct pages accessed in $I_j$. Otherwise, the second access to that page will be a hit.
+		\item There's a miss when accessing $p$. Then, there're at least $k+1$ distinct pages accessed in $I_j$, as $p$ is not in the cache by the time of access.
+		\item Both of the above do not happen. Then, every page is accessed at most once in $I_j$, and $p$ is in the cache when accessed. Therefore, there're exactly $k$ distinct pages other than $p$.
+	\end{enumerate}
 
-For the first two cases, since there're at least $k+1$ distinct pages accessed in $I_j$, and $\OPT$ can only hold $k_{\OPT}$ pages in the cache, $\OPT$ must incur at least $k - k_{\OPT} + 1$ misses in $I_j$.
+	For the first two cases, since there're at least $k+1$ distinct pages accessed in $I_j$, and $\OPT$ can only hold $k_{\OPT}$ pages in the cache, $\OPT$ must incur at least $k - k_{\OPT} + 1$ misses in $I_j$.
 
-For the last case, since $p$ stays in the cache at the beginning of $I_j$, $\OPT$ can only hold $k_{\OPT} - 1$ pages other than $p$ in the cache. Therefore, $\OPT$ must incur at least $k - (k_{\OPT} - 1) = k - k_{\OPT} + 1$ misses in $I_j$ as well.
+	For the last case, since $p$ stays in the cache at the beginning of $I_j$, $\OPT$ can only hold $k_{\OPT} - 1$ pages other than $p$ in the cache. Therefore, $\OPT$ must incur at least $k - (k_{\OPT} - 1) = k - k_{\OPT} + 1$ misses in $I_j$ as well.
 
-All three cases lead to the same conclusion that $\OPT$ incurs at least $k - k_{\OPT} + 1$ misses in $I_j$. Summing over all intervals, we have
+	All three cases lead to the same conclusion that $\OPT$ incurs at least $k - k_{\OPT} + 1$ misses in $I_j$. Summing over all intervals, we have
 
-\[ \cost_{\text{LRU}}(k) \leq \frac{k}{k - k_{\OPT} + 1} \cdot \cost_{\OPT}(k_{\OPT}). \]
-\end{proof}  
+	\[ \cost_{\text{LRU}}(k) \leq \frac{k}{k - k_{\OPT} + 1} \cdot \cost_{\OPT}(k_{\OPT}). \]
+\end{proof}
 
 \begin{corollary}
-  When $k = 2k_\OPT$, the competitive ratio becomes less than 2.
-\end{corollary}   
+	When $k = 2k_\OPT$, the competitive ratio becomes less than 2.
+\end{corollary}

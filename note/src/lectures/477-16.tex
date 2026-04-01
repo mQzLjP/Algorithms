@@ -2,9 +2,9 @@
 
 \section{Intro: Matrix Multiplication}
 
-\begin{question}[Matrix Multiplication]
-	Given two matrices $A, B\in \RR ^{n\times n}$, compute $C = AB$, where $C[i,j] = \sum_{k=1}^n A[i,k]B[k,j]$.
-\end{question}
+\begin{problem}[Matrix Multiplication]
+Given two matrices $A, B\in \RR ^{n\times n}$, compute $C = AB$, where $C[i,j] = \sum_{k=1}^n A[i,k]B[k,j]$.
+\end{problem}
 
 Using brute force, we can compute $C$ in $O(n^3)$ time.
 
@@ -63,9 +63,9 @@ However, algorithm like Strassen's will fail in terms of the algebra, as we can'
 
 Let's restrict ourselves to unweighted, undirected graphs.
 
-\begin{question}[APSP for Unweighted, Undirected Graphs]
-	Given an unweighted, undirected graph $G = (V,E)$ with $n$ vertices, compute the shortest distance between every pair of vertices, as a matrix $D\in \{0,1,\ldots, n-1\}^{n\times n}$, where $D[i,j]$ is the shortest distance between vertex $i$ and vertex $j$.
-\end{question}
+\begin{problem}[APSP for Unweighted, Undirected Graphs]
+Given an unweighted, undirected graph $G = (V,E)$ with $n$ vertices, compute the shortest distance between every pair of vertices, as a matrix $D\in \{0,1,\ldots, n-1\}^{n\times n}$, where $D[i,j]$ is the shortest distance between vertex $i$ and vertex $j$.
+\end{problem}
 
 We represent the graph $G$ as an adjacency matrix $A\in \{0,1\}^{n\times n}$, where
 \[ A[i,j] = \begin{cases}

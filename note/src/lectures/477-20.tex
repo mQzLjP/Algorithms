@@ -31,6 +31,50 @@ Random contraction is a simple randomized algorithm for finding a global min cut
 	\item the remaining two vertices represent a cut, and we return it.
 \end{itemize}
 
+We're good as long as we never contract an edge that crosses the global min cut. If we fix the cut $(X, V\setminus X)$, the probability that the first contraction is in the cut is at most $\frac{2m/n}{m} = \frac{2}{n}$. This is independent from the number of edges. As one contraction reduces the number of vertices by 1, we can safely repeat the calculation for all contractions:
+
+\begin{align*}
+	\Pr(\text{all contractions are safe}) & \geq \left(1-\frac{2}{n}\right)\left(1-\frac{2}{n-1}\right)\cdots \left(1-\frac{2}{3}\right) \\
+	                                      & = \frac{n-2}{n}\cdot \frac{n-3}{n-1}\cdots \frac{1}{3}                                       \\
+	                                      & = \frac{2}{n(n-1)}.
+\end{align*}
+
+Therefore, the probability that we find the global min cut in $k$ executions is
+\[
+	1 - (1 - 2/n(n-1))^k \approx 1 - (1-2/n^2)^k \approx 1 - e^{-2k/n^2}.
+\]
+
+Set $k = 5n^2\log n$, the probability of success is at least $1 - e^{-10\log n} = 1 - n^{-10}$.
+
+Every contraction can be implemented in $O(n)$ time using Union Find data structure, and there are $n-2$ contractions, so the time complexity of one execution is $O(n^2)$. These together give us the following result:
+
+\begin{theorem}
+	With high probability, Karger's random contraction algorithm finds the global min cut in $O(n^4\log n)$ time.
+\end{theorem}
+
+\section{Karger's and Stein's Algorithm}
+
+$O(n^4\log n)$ is not good enough. We can do better by modifying Karger's algorithm as follows:
+
+\begin{algorithm}[H]
+	\caption{Karger's and Stein's Algorithm}
+	\If{$n \leq 10$}{
+		\Return Min Cut of $G$ using any algorithm\;
+	}
+	$G' \gets G$\;
+	$G_1 \gets$ random contraction of $G'$ until $|V(G_1)| = \lceil n/\sqrt{2} + 1 \rceil$\;
+	$c_1 \gets \text{KargerStein} (G_1)$\;
+	$G_2 \gets$ random contraction of $G'$ until $|V(G_2)| = \lceil n/\sqrt{2} + 1 \rceil$\;
+	$c_2 \gets \text{KargerStein} (G_2)$\;
+	\Return $\min\{c_1, c_2\}$\;
+\end{algorithm}
+
+Time complexity is easily to analyze. Let $T(n)$ be the time complexity of Karger's and Stein's algorithm on a graph with $n$ vertices. Then we have
+
+\[ T(n) = 2T(\frac{n}{\sqrt{2}}) + O(n^2) \implies T(n) = O(n^2 \log n). \]
+
+However, the success probability of one trial is harder. To solve this, we need to look at a short diversion.
+
 \section{Galton and Watson's Problem}
 
 Galton and Watson's problem is a classic problem in probability theory that models the extinction of family names. The problem can be stated as follows:
@@ -48,4 +92,44 @@ Denote $X_i$ as the number of individuals in generation $i$. We state here, with
 		\item with probability 1 if $\mu = 1$ unless $\Pr(\zeta = 1) = 1$ (in which case it's 0);
 		\item with probability $1-c$ if $\mu > 1$, where $c$ depends on the distribution of $\zeta$.
 	\end{itemize}
+\end{theorem}
+
+In Karger-Stein Algorithm, we stop at $\lceil n/\sqrt{2} + 1 \rceil$ vertices. The probability that the global min cut is not contracted is at least
+
+\[
+	\left(1-\frac{2}{n}\right)\left(1-\frac{2}{n-1}\right)\cdots \left(1-\frac{2}{\lceil n/\sqrt{2} + 1 \rceil + 1}\right) \approx \frac{1}{2}.
+\]
+
+We can view the contractions as a branching process, where each branch corresponds to a successful contraction that does not contract the global min cut.
+We independently run two branches with probability $\frac{1}{2}$ of success. Therefore, the number of `offspings' follow the distribution of $\Pr(\zeta = 0) = \Pr(\zeta = 2) = 1/4, \Pr(\zeta = 1) = 1/2$. The expected number of offsprings is $\mu = 1$, and $\Pr(\zeta = 1) \neq 1$, so by Theorem~\ref{thm:gw}, the branching will eventually go extinct.
+
+However, we only care about the probability that it goes extinct in the first $2\log n$ generations. Denote $P_i$ as the probability that the branching process still exists after $i$ generations. We have
+
+\begin{align*}
+	P_d & = 1-(1-\frac{P_{d-1}}{2})^2     \\
+	    & = P_{d-1} - \frac{P_{d-1}^2}{4} \\
+\end{align*}
+
+\begin{lemma}
+	\[ P_d = \Theta(\frac{1}{d}) .\]
+\end{lemma}
+\begin{proof}
+	We prove by induction, that $P_d \geq \frac{1}{d+1}$.
+
+	$P_0 = 1\geq 1$. Assume $P_{d-1} \geq \frac{1}{d}$.
+
+	As $x - x^2/4$ is increasing for $x\in [0,1]$, we have
+
+	\begin{align*}
+		P_d & = P_{d-1} - \frac{P_{d-1}^2}{4}     \\
+		    & \geq \frac{1}{d} - \frac{1}{4d^2}   \\
+		    & \geq \frac{1}{d} - \frac{1}{d(d+1)} \\
+		    & \geq \frac{1}{d+1}.
+	\end{align*}
+\end{proof}
+
+Therefore, for a $O(n^2\log n)$ time algorithm, the probability of success is at least $P_{2\log n} = \Theta(1/\log n)$. We can repeat the algorithm for $O(\log^2 n)$ times to boost the probability of success to $1 - 1/\text{poly}(n)$.
+
+\begin{theorem}
+	With high probability, KargerStein algorithm finds the global min cut in $O(n^2\log^3 n)$ time.
 \end{theorem}

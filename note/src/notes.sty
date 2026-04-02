@@ -171,6 +171,8 @@
 \usepackage{xifthen}
 % \pdfminorversion=7
 \usepackage{pdfpages}
+% Compatibility fallback for older LaTeX kernels used by some TeX distributions.
+\providecommand{\IfPDFManagementActiveF}[1]{#1}
 \usepackage{transparent}
 \newcommand{\incfig}[2][\columnwidth]{%
 	\def\svgwidth{#1}

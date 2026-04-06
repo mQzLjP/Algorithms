@@ -27,7 +27,7 @@ We can then make use of it to design Dinitz Algorithm. The main idea is to find 
 \begin{proof}
 	We can build layers based on the distance from $s$ in the residual graph. Then $G'$ is the subgraph after removing all edges that don't go from a lower layer to a higher layer (also note that all edges can only connect two neighboring layers). Since $f'$ is a blocking flow, there is no path that traverses all layers exactly once (i.e. $L_0 \to L_1 \to \cdots \to L_d$) in $G_{f+f'}$.
 
-	As any newly created edges only go backwards, all paths will be strictly longer. This proves the lemma.
+	As any newly created edges only go backwards, all paths will be strictly longer.
 \end{proof}
 
 Then we give an algorithm for computing blocking flows.

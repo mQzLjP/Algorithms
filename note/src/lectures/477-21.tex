@@ -1,4 +1,4 @@
-\chapter{Randomized Vertex Cut}
+\chapter{Randomized Vertex Connectivity}
 
 \begin{definition}[Vertex Cut]
 	For a graph $G = (V, E)$, a vertex cut is a subset of vertices $S \subseteq V$ such that the graph $G' = (V \setminus S, E')$ is disconnected. The size of the vertex cut is the number of vertices in $S$.
@@ -104,8 +104,7 @@ Consider an urn with $N$ balls, $\epsilon N$ of which are green and the rest are
 	Suppose WLOG that $\vol(A) \le \vol(B)$, then $\vol(B) > \frac{m}{2} - \frac{k^2}{4}$, and $\vol(A) > \frac{m}{k}$. Therefore, the probability that $s$ and $t$ are in different sides of the cut is
 	\[ \Pr[s\in A, t\in B] + \Pr[s\in B, t\in A] = \frac{\vol(A)\vol(B)}{2m^2} > \frac{1}{4k} - \frac{k}{8m}. \]
 
-	We can assume $m > k^2$, otherwise we can find a $k$-cut by other algorithms. Thus, the probability above at least $\frac{1}{8k}$. By repeating for $10k\log n$ times, we can find a $k$-cut with probability $1 - N^{-1}$.
-
+	We know $k\le 2m/n$. Furthermore, assume $k\le n/2$ (otherwise we can turn to Ford-Fulkerson as $k = \Omega(n)$). Then $m\ge k^2$, so the probability above is at least $\frac{1}{8k}$. Sampling for $10k\log n$ times, we can find a $k$-cut with probability at least $1 - N^{-1}$.
 \end{proof}
 
 \section{Unbalanced Cut}
@@ -168,6 +167,5 @@ This gives the final algorithm for judging $k$-connectivity:
 	\Return true once we find a $k$-cut, and false if we fail for balanced cut and all unbalanced cuts\;
 \end{algorithm}
 
-\begin{theorem}
-	The running time of Algorithm~\ref{alg:vertex-cut} is $\tilde{O}(k^2 m)$.
-\end{theorem}
+Algorithm~\ref{alg:balanced-cut} runs in $\tilde{O}(k^2 m)$ time, and each unbalanced cut runs in $\tilde{O}(k^2 L)$ time. As we have $O(\log n)$ different values of $L$, and $\tilde{O}(m/L)$ unbalanced cuts for each $L$, the total time for unbalanced cuts is $\tilde{O}(k^2 m)$. Therefore, the total time for Algorithm~\ref{alg:vertex-cut} is $\tilde{O}(k^2 m)$.
+This proves Theorem~\ref{thm:vertex-cut}.

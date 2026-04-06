@@ -1,0 +1,173 @@
+\chapter{Randomized Vertex Cut}
+
+\begin{definition}[Vertex Cut]
+	For a graph $G = (V, E)$, a vertex cut is a subset of vertices $S \subseteq V$ such that the graph $G' = (V \setminus S, E')$ is disconnected. The size of the vertex cut is the number of vertices in $S$.
+\end{definition}
+
+As shown in homework, we can convert the vertex cut problem to an edge cut problem by splitting each vertex $v$ into two vertices $v_{in}$ and $v_{out}$, and adding a directed edge from $v_{in}$ to $v_{out}$ with capacity 1. Then, for each edge $(u, v)$ in the original graph, we add a directed edge from $u_{out}$ to $v_{in}$ and a directed edge from $v_{out}$ to $u_{in}$ with infinite capacity. In this way, the minimum vertex cut in the original graph corresponds to the minimum edge cut in the transformed graph. This is called the \textbf{directed version of the graph}.
+
+\begin{definition}[$k$-connectivity]
+	A graph is $k$-connected if it remains connected after the removal of any $k-1$ vertices. Equivalently, a graph is $k$-connected if there are at least $k$ vertex-disjoint paths between any two vertices in the graph.
+\end{definition}
+
+To find the minimum vertex cut, it suffices to solve the decision problem of whether a graph is $k$-connected for a given $k$.
+
+For this chapter, we won't care about the logarithmic factors in the running time:
+
+\begin{definition}[$\tilde{O}$ notation]
+	We say that an algorithm runs in $\tilde{O}(f(n))$ time if it runs in $O(f(n) \cdot \text{polylog}(f(n)))$ time, where $\text{polylog}(f(n))$ is a polynomial function of $\log(f(n))$.
+\end{definition}
+
+\begin{theorem}\label{thm:vertex-cut}
+	We can decide whether a graph is $k$-connected in $\tilde{O}(k^2 m)$ time.
+\end{theorem}
+
+\section{Random Sampling}
+
+Consider an urn with $N$ balls, $\epsilon N$ of which are green and the rest are purple.
+
+\begin{itemize}
+	\item The number of balls to pick to see $\ge 1$ green ball with probability $\ge 1 - N^{-10}$ is $\Omega(\frac{1}{\epsilon} \log N)$.
+
+	      To see one green ball with constant probability, we can sample for $\epsilon^{-1}$ times. Then, to boost the probability to $1 - N^{-10}$, we can repeat the sampling for $\log N$ times.
+
+	      \[ 1 - (1 - \epsilon)^{\epsilon^{-1} 10 \ln N} \approx 1 - e^{-10\ln N} = 1 - N^{-10} \]
+
+	\item The number of balls to pick so that the probability that they're all purple is constant is $\frac{1}{\epsilon}$.
+
+	      \[ (1 - \epsilon)^{\epsilon^{-1}} \approx e^{-1} \]
+
+	      Similarly, if we repeat the sampling for $\Omega(\log N)$ times, at least one of the sampling will be all purple with probability $1 - N^{-10}$.
+
+\end{itemize}
+
+\begin{remark}
+	For any randomized process with constant probability of success, we can repeat the process for $\Omega(\log N)$ times to boost the probability of success to $1 - N^{-10}$.
+\end{remark}
+
+\section{Balanced Cut}
+
+\begin{definition}[Volume of a set]
+	The volume of a set $S \subseteq V$ is defined as $\text{vol}(S) := \sum_{v \in S} \deg(v)$.
+\end{definition}
+
+\begin{definition}[Balanced cut]
+	Suppose $G$ is not $(k+1)$-connected, and has a $k$-cut $X$ separating $A$ and $B$.
+
+	Then $X$ is $k$-balanced if $\vol(A), \vol(B) \ge \frac{m}{k}$, and $k$-unbalanced otherwise (i.e. $\vol(A) < \frac{m}{k}$ WLOG).
+\end{definition}
+
+\begin{lemma}
+	If there's a $k$-balanced cut, we can find a $k$-cut in $O(k^2m\log n)$ time w.h.p.
+\end{lemma}
+
+\begin{proof}
+	Consider the following algorithm:
+
+	\begin{algorithm}[H]
+		\caption{V-sample}
+		pick $(u,v)\in E$\;
+		pick $s\in \{u,v\}$\;
+		\Return s\;
+	\end{algorithm}
+
+	We want to calculate the probability that $s = v$, where $v$ is an arbitrary vertex in $V$.
+
+	The probability that we choose an edge incident to $v$ is $\frac{\deg(v)}{m}$, and the probability that we choose $v$ given that we choose an edge incident to $v$ is $\frac{1}{2}$. Therefore, the probability that $s = v$ is $\frac{\deg(v)}{2m}$.
+
+	Therefore,
+
+	\[ \Pr[s\in A] = \sum_{v\in A} \Pr[s=v] = \sum_{v\in A} \frac{\deg(v)}{2m} = \frac{\vol(A)}{2m} \]
+
+	Using V-sample, we can sample both $s$ and $t$:
+
+	\begin{algorithm}[H]
+		\caption{Balanced Cut}\label{alg:balanced-cut}
+		\For {$i = 1, \dots, 10k\log n$}{
+			V-sample $s$ and $t$\;
+			Compute the minimum $s$-$t$ vertex cut $X$ in the directed version of $G$\;
+		}
+		\Return the minimum cut $X$ found\;
+	\end{algorithm}
+
+	We hope $s$ and $t$ are in different sides of the cut $X$. Note that
+	$$2m = \vol(A) + \vol(B) + \vol(X)$$
+
+	Also
+	\begin{align*}
+		\vol(X) & = |\{(u,v): u\in X, v\in X\}| + |\{(u,v): u\in A, v\in X\}| + |\{(u,v): u\in B, v\in X\}| \\
+		        & < k^2 + \vol(A) + \vol(B)
+	\end{align*}
+
+	So $\vol(A) + \vol(B) > m - \frac{k^2}{2}$.
+
+	Suppose WLOG that $\vol(A) \le \vol(B)$, then $\vol(B) > \frac{m}{2} - \frac{k^2}{4}$, and $\vol(A) > \frac{m}{k}$. Therefore, the probability that $s$ and $t$ are in different sides of the cut is
+	\[ \Pr[s\in A, t\in B] + \Pr[s\in B, t\in A] = \frac{\vol(A)\vol(B)}{2m^2} > \frac{1}{4k} - \frac{k}{8m}. \]
+
+	We can assume $m > k^2$, otherwise we can find a $k$-cut by other algorithms. Thus, the probability above at least $\frac{1}{8k}$. By repeating for $10k\log n$ times, we can find a $k$-cut with probability $1 - N^{-1}$.
+
+\end{proof}
+
+\section{Unbalanced Cut}
+
+Suppose $X$ is unbalanced. Let $A$ be the side with smaller volume, and $L$ be a bound so that $\vol(A) \in [L/2, L]$.
+
+We observe that in the directed version of $G$, the min cut is actually cutting $A\cup X_{\text{in}}$ and $B\cup X_{\text{out}}$.
+
+\begin{lemma}
+	In $A\cup X_{\text{in}}$,
+	\[ \sum_{v\in A\cup X_{\text{in}}} \text{outdeg}(v) = \vol(A)+ |A| + |X|.\]
+\end{lemma}
+\begin{proof}
+	For each vertex $v\in A$, we have $\text{outdeg}(v_{\text{in}})+\text{outdeg}(v_{\text{out}}) = \deg(v) + 1$, and for each vertex $x\in X$, we have $\text{outdeg}(x_{\text{in}}) = 1$.
+\end{proof}
+
+We first V-sample $\frac{10m\ln n}{L}$ vertices to $S$ and hope we sampled a vertex in $A$. The probability that we don't sample any vertex in $A$ is
+
+\[ \Pr[S\cap A = \emptyset] = (1 - \frac{\vol(A)}{2m})^{\frac{10m\ln n}{L}} \le (1 - \frac{L}{4m})^{\frac{10m\ln n}{L}} \le e^{-2.5\ln n} = n^{-2.5}. \]
+
+Then it suffices to find a $k$-cut separating $s$ in $\tilde{O}(k^2 L)$ time.
+
+Here we present an algorithm, assuming we have fixed an $s_\text{out}$ in $A$:
+
+\begin{algorithm}[H]
+	\caption{Unbalanced Cut}\label{alg:unbalanced-cut}
+	$\vec{G}\gets$ directed version of $G$\;
+	$f\gets 0$\;
+	\For {$i = 1, \dots, k+1$}{
+		Do a DFS from $s_\text{out}$ in $\vec{G_f}$ until we scan $3kL$ edges\;
+		$T\gets$ the DFS tree\;
+		$E'\gets$ non-tree edges scanned\;
+		Pick $(u,v)$ in $T\cup E'$ uniformly at random\;
+		$f'\gets$ unit flow from $s_\text{out}$ to $u$\;
+		$f\gets f + f'$\;
+	}
+	\eIf{the $k+1$-th iteration fails to scan $3kL$ edges}{
+		\Return true\;
+	}{
+		\Return false\;
+	}
+\end{algorithm}
+
+The probability that $u$ is not valid, i.e. $u\in A\cup X_{\text{in}}$, is at most
+\[\Pr[u\in A\cup X_{\text{in}}] = \frac{\vol(A) + |A| + |X|}{3kL} \le \frac{3L}{3kL} = \frac{1}{k}.\]
+
+We hope all $k$ iterations are valid. The probability is at least $(1 - \frac{1}{k})^k \approx e^{-1}$. So, performing $\log n$ repetitions, we can find a $k$-cut with probability $1 - N^{-1}$.
+
+This gives the final algorithm for judging $k$-connectivity:
+
+\begin{algorithm}[H]
+	\caption{Vertex Cut}\label{alg:vertex-cut}
+	Run Algorithm~\ref{alg:balanced-cut} for balanced cut\;
+	\For{$L = k, 2k, 4k, \dots, \frac{m}{k}$}{
+		$S\gets$ V-sample $\frac{10m\ln n}{L}$ vertices\;
+		\For{$s\in S$}{
+			Run Algorithm~\ref{alg:unbalanced-cut} for unbalanced cut near $s$ for $O(\log n)$ times\;
+		}
+	}
+	\Return true once we find a $k$-cut, and false if we fail for balanced cut and all unbalanced cuts\;
+\end{algorithm}
+
+\begin{theorem}
+	The running time of Algorithm~\ref{alg:vertex-cut} is $\tilde{O}(k^2 m)$.
+\end{theorem}

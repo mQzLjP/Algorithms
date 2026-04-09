@@ -1,0 +1,111 @@
+\chapter{Integer Linear Programming}
+
+\begin{problem}[Integer Linear Programming (ILP)]
+\begin{align*}
+	\text{maximize} \quad    & \sum_{i=1}^n c_i x_i                                            \\
+	\text{subject to} \quad  & \sum_{i=1}^n a_{i,j} x_i \leq b_j, \quad 1 \leq j \leq m        \\
+	\forall i \in [n], \quad & \text{either } x_i \in \mathbb R \text { or } x_i \in \mathbb Z
+\end{align*}
+\end{problem}
+\begin{theorem}
+	\[\text{3-SAT} \leq_p \text{ILP}.\]
+	Therefore, ILP is NP-complete (as ILP is in NP).
+\end{theorem}
+\begin{proof}
+	Suppose we have a clause $C = x_1 \vee \neg x_2 \vee x_3$. We can encode this clause as the following linear constraint:
+	\[ x_1 + (1 - x_2) + x_3 \geq 1. \]
+	For each clause, we can write a similar linear constraint. Then the ILP has a solution (regardless of the objective function) if and only if the original 3-SAT formula is satisfiable.
+\end{proof}
+
+\begin{remark}
+	We have an approximation template for any problem using ILP:
+	\begin{enumerate}
+		\item Formulate the problem as an ILP.
+		\item Relax the integrality constraints to get a linear program (LP).
+		\item Solve the LP to get a fractional solution $x^*$.
+		\item Round the fractional solution to get an integral solution $\hat{x}$.
+	\end{enumerate}
+\end{remark}
+
+\section{Weighted Vertex Cover}
+
+\begin{problem}[Weighted Vertex Cover]
+Given a graph $G = (V, E)$ and weights $w: V \to \mathbb R^+$, find a vertex cover $V' \subseteq V$ that minimizes $\sum_{v \in V'} w(v)$, so that $\forall (u, v) \in E, V'\cap \{u, v\} \neq \emptyset$.
+\end{problem}
+
+The ILP formulation of this problem is as follows:
+\begin{align*}
+	\text{minimize} \quad   & \sum_{v \in V} w(v) x(v)                       \\
+	\text{subject to} \quad & x(u) + x(v) \geq 1, \quad \forall (u, v) \in E \\
+	\forall v \in V, \quad  & x(v) \in \{0, 1\}
+\end{align*}
+
+Replacing $x(v) \in \{0, 1\}$ with $x(v) \in [0, 1]$ gives us the LP relaxation.
+
+Let the LP solution be $x^*$. We can round it as follows:
+
+\[ \hat{x}(v) = \begin{cases}
+		1 & \text{if } x^*(v) \geq \frac{1}{2} \\
+		0 & \text{otherwise}
+	\end{cases} \]
+
+\begin{theorem}
+	$\ALG$ is a valid vertex cover and
+	\[ \ALG \leq 2 \cdot \OPT. \]
+\end{theorem}
+\begin{proof}
+	\begin{itemize}
+		\item $\ALG$ is a valid vertex cover: For any edge $(u, v)$, we have $x^*(u) + x^*(v) \geq 1$. Therefore, at least one of $x^*(u)$ and $x^*(v)$ is at least $\frac{1}{2}$, so at least one of $u$ and $v$ is in $\ALG$.
+		\item $\ALG \leq 2 \cdot \OPT$: We claim $\ALG \le 2\OPT_\text{LP}$, as for any vertex $v$, $\hat{x}(v) \le 2 x^*(v)$. Therefore, $\ALG = \sum_{v \in V} w(v) \hat{x}(v) \leq 2 \sum_{v \in V} w(v) x^*(v) = 2 \cdot \OPT_\text{LP}$. Since $\OPT_\text{LP} \leq \OPT$, we have $\ALG \leq 2 \cdot \OPT$.
+	\end{itemize}
+\end{proof}
+
+\section{Weighted Set Cover}
+
+\begin{problem}[Weighted Set Cover]
+Given $\mathcal S = \{S_1, S_2, \ldots, S_m\}$, where $S_i \subseteq X, |X| = n$, and $\cost(S_i) \in \mathbb R^+$, output $\mathcal T\in \mathcal S: \bigcup_{T\in \mathcal T} T = X$ and $\sum_{T \in \mathcal T} \cost(T)$ is minimized.
+\end{problem}
+
+The ILP formulation of this problem is as follows:
+
+\begin{align*}
+	\text{minimize} \quad    & \sum_{i=1}^m \cost(S_i) x(S_i)                        \\
+	\text{subject to} \quad  & \sum_{S_i \ni j} x(S_i) \geq 1, \quad \forall j \in X \\
+	\forall i \in [m], \quad & x(S_i) \in \{0, 1\}
+\end{align*}
+
+Replacing $x(S_i) \in \{0, 1\}$ with $x(S_i) \in [0, 1]$ gives us the LP relaxation.
+
+Suppose we have the LP solution $x^*$. Rounding to the nearest integer won't work here, as the $x$ values can be very small but still add up to 1 for each element. Here we take a randomized approach.
+
+\begin{algorithm}[H]
+	\caption{One-Time Randomized Rounding for Weighted Set Cover}
+	$\mathcal T \gets \emptyset$\;
+	\ForEach{$S_i \in \mathcal S$}{
+		$\mathcal T \gets \mathcal T \cup \{S_i\}$ with probability $x^*(S_i)$\;
+	}
+\end{algorithm}
+
+The $\mathcal T$ after this algorithm has an expected cost of
+\[ \E[\cost(\mathcal T)] = \E[\sum_{i=1}^{m} \cost(S_i)\mathbb 1_{\{S_i\in \mathcal T\}}] = \sum_{i=1}^m \cost(S_i) x^*(S_i) = \OPT_\text{LP}. \]
+where $\mathbb 1_{\{S_i\in \mathcal T\}}$ is the indicator variable that is 1 if $S_i \in \mathcal T$ and 0 otherwise.
+
+However, if we look at the probability that an element $j$ is not covered, we have
+
+\[ \Pr[j \text{ is not covered}] = \prod_{S_i \ni j} (1 - x^*(S_i)) \leq e^{-\sum_{S_i \ni j} x^*(S_i)} \leq e^{-1}. \]
+
+This is not a good probability. To fix this, we can repeat the randomized rounding process $\ln n + 1$ times and take the union of the sets chosen in each iteration. This way, the probability that an element is not covered is at most $e^{-\ln n+1} = \frac{1}{en}$, and by the union bound, the probability that any element is not covered is at most $\frac{1}{en} \cdot n = e^{-1}$. After repeating the process $O(\log n)$ times, the probability that any element is not covered is at most $\frac{1}{n^c}$ for some constant $c$, which is negligible.
+
+\begin{algorithm}[H]
+	\caption{Approximated Weighted Set Cover}
+	$\mathcal T \gets \emptyset$\;
+	\For{$t = 1$ to $\ln n + 1$}{
+		\ForEach{$S_i \in \mathcal S$}{
+			$\mathcal T \gets \mathcal T \cup \{S_i\}$ with probability $x^*(S_i)$\;
+		}
+	}
+\end{algorithm}
+
+As the expected cost of $\mathcal T$ in each iteration is $\OPT_\text{LP}$, the expected cost of $\mathcal T$ after $\ln n + 1$ iterations is at most $(\ln n + 1) \cdot \OPT_\text{LP}$. Therefore, we have a $(1 + \ln n)$-approximation algorithm for the weighted set cover problem.
+
+In fact, it can be shown that if efficient algorithms with better approximation ratios than $(1 + \ln n)$ exist for the weighted set cover problem, or with better approximation ratios than $(2-\epsilon)$ approximation for weighted vertex cover, then $P = NP$. Therefore, these approximation ratios are essentially the best we can achieve for these problems.

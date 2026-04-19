@@ -1,0 +1,180 @@
+\section{$k$-terminal Cut}
+
+\begin{problem}[$k$-terminal Cut]\label{prob:k-terminal-cut}
+Given an undirected graph $G=(V,E,c)$ with $c: E \to \mathbb R^{\ge 0}$ and $k$ terminals $S = \{s_1, s_2, \ldots, s_k\}\subset V$, partition $V$ into $k$ sets $V_1, V_2, \ldots, V_k$ such that $s_i\in V_i$ for all $i$, and $\sum_{(u,v)\in E: u\in V_i, v\in V_j, i\ne j} c(u,v)$ is minimized.
+\end{problem}
+
+The ILP formulation of this problem is as follows (let $x_v^i$ be an indicator variable for whether $v$ is in $V_i$, and $d(u,v)$ be an indicator variable for whether $u$ and $v$ are in different sets):
+\begin{align*}
+	\text{minimize} \quad   & \sum_{e\in E} c(e) d(e)                          \\
+	\text{subject to} \quad & d(u,v) = \frac{1}{2}\sum_{i=1}^k |x_u^i - x_v^i| \\
+	                        & \sum_{i=1}^k x_v^i = 1                           \\
+	                        & x_{s_i}^i = 1                                    \\
+	                        & x \ge 0                                          \\
+	                        & x \in \mathbb Z
+\end{align*}
+
+The Linear Programming Scheme doesn't support absolute values, however, we can set a new variable $x_{u,v}$ so that:
+
+\begin{align*}
+	d(u,v)    & = \frac{1}{2}\sum_{i=1}^k x_{u,v}^i \\
+	x_{u,v}^i & \ge x_u^i - x_v^i                   \\
+	x_{u,v}^i & \ge x_v^i - x_u^i
+\end{align*}
+
+We're minimizing $x_{u,v}$, so at least one of the two constraints must be tight, which gives us $x_{u,v}^i = |x_u^i - x_v^i|$.
+
+
+Removing the last constraint gives us the LP relaxation. After solving $x$ for LP, we perform a random rounding by let the terminal takes all vertices with $x_v^i \ge \rho$ in some random order.
+
+We denote $B(s_i,\rho) = \{v\in V: x_v^i \ge \rho\}$ as the ball of $s_i$ with radius $\rho$. The algorithm is as follows:
+
+\begin{algorithm}[H]
+	\caption{Randomized Rounding for $k$-terminal Cut} \label{alg:k-terminal-cut}
+	$\rho \gets$ uniformly random in $[0,1]$\;
+	Pick $\sigma = (1, 2, \ldots, k-1, k)$ or $\sigma = (k-1, \ldots, 2, 1, k)$ with probability $\frac{1}{2}$ each\;
+	\For{$i=1$ to $k-1$}{
+		$V_{\sigma(i)} \gets B(s_{\sigma(i)}, \rho)\setminus \bigcup_{j<i} V_{\sigma(j)}$\;
+	}
+	$V_{\sigma(k)} \gets V \setminus \bigcup_{j<k} V_{\sigma(j)}$\;
+	\Return $V_1, V_2, \ldots, V_k$\;
+\end{algorithm}
+
+\begin{theorem}
+	Algorithm~\ref{alg:k-terminal-cut} is an expected $3/2$-approximation for the $k$-terminal Cut problem.
+\end{theorem}
+\begin{proof}
+	For an edge $e=(u,v)$, we check the probability that $e$ is cut by the algorithm.
+
+	Assume $x_u$ and $x_v$ differs in 0 or 2 coordinates. Otherwise, we can create some artificial vertices to force it.
+
+	Without loss of generality, we can assume $x_u^1 \ge x_v^1$ and $x_u^2 \le x_v^2$. Denote $x_u^1 - x_v^1 = x_v^2 - x_u^2 = x_{u,v} = \alpha$.
+
+	\begin{itemize}
+		\item Let $x_v^1 \le x_u^1 \le x_u^2 \le x_v^2$. If 2 takes the first turn, $e$ is cut if $\rho \in [x_u^2, x_v^2)$, which happens with probability $\alpha$. If 1 takes the first turn, $e$ is cut if $\rho \in [x_u^2, x_v^2) \cup [x_v^1, x_u^1)$, which happens with probability $2\alpha$. Thus, the total probability is $\frac{1}{2}\alpha + \frac{1}{2}2\alpha = \frac{3}{2}\alpha$.
+		\item Let $x_v^1 \le x_u^2 \le x_u^1 \le x_v^2$. If 2 takes the first turn, $e$ is cut if $\rho \in [x_u^2, x_v^2)$, which happens with probability $\alpha$. If 1 takes the first turn, $e$ is cut if $\rho \in [x_v^1, x_v^2)$, which happens with probability $\le 2\alpha$. Thus, the total probability is $\le\frac{1}{2}\alpha + \frac{1}{2}2\alpha = \frac{3}{2}\alpha$.
+	\end{itemize}
+
+	The cost of LP is $\sum_{e\in E} c(e) x_{u,v}$, and the expected cost of the algorithm is $\le\sum_{e\in E} c(e) \cdot \frac{3}{2} x_{u,v} = \frac{3}{2}\OPT_\text{LP} \le \frac{3}{2}\OPT$.
+
+\end{proof}
+
+\chapter{Approximation on Similar Problems}
+
+Another template for approximation NP-hard problems $A$ is to solve a problem $B\in \P$ that is similar to $A$, i.e. $\OPT_B$ is close to $\OPT_A$. We can then use the solution to $B$ to build a solution to $A$ with cost $\Theta(\OPT_A)$.
+
+\section{Metric TSP}
+
+\begin{problem}[Metric TSP]
+Given a complete undirected graph $G=(V, E, d)$ with $E = V\times V$ and $d: V\times V \to \mathbb R^{\ge 0}$, find a tour of the vertices $(v_0,v_1,\ldots,v_{n-1},v_0)$ that minimizes $\sum_{i=0}^{n-1} d(v_i,v_{i+1\bmod n})$.
+
+Furthermore, $d$ satisfies:
+\begin{align*}
+	d(u,v) & = d(v,u)            \\
+	d(u,v) & = 0 \iff u=v        \\
+	d(u,v) & \le d(u,x) + d(x,v)
+\end{align*}
+\end{problem}
+
+Such a tour satisfies:
+\begin{enumerate}
+	\item The tour must be connected, and span all vertices.
+	\item The tour must be a cycle, i.e. each vertex has degree 2.
+\end{enumerate}
+
+In terms of similarity, the first constraint can be seen in Minimum Spanning Tree, and the second constraint can be seen in Cycle Cover, which leads to Matching problems.
+
+Also, the easiest tour we can calculate is the Euler tour, which exists if and only if all degrees are even.
+
+\subsection{Approximation via MST}
+
+\begin{lemma}
+	\[ d(\text{MST}) \le (1-\frac{1}{n})d(\text{TSP}).\]
+\end{lemma}
+\begin{proof}
+	We remove the longest edge from the optimal TSP tour, which results in a spanning tree. The cost of the removed edge is at least $\frac{1}{n}d(\text{TSP})$, so the cost of the resulting spanning tree is at most $(1-\frac{1}{n})d(\text{TSP})$. Since MST is the minimum spanning tree, we have $d(\text{MST}) \le (1-\frac{1}{n})d(\text{TSP})$.
+\end{proof}
+
+We can easily find a MST in polynomial time. To force an Euler tour, we can double the edges of the MST.
+
+\begin{algorithm}[H]
+	\caption{MST-based TSP Approximation} \label{alg:MST-TSP}
+	Find MST $T$ of $G$\;
+	$[2T]\gets$ double the edges of $T$\;
+	$C_0 \gets(u_0, u_1, \ldots, u_{2(n-1)-1}, u_0)$ an Euler tour of $[2T]$.
+	$C \gets$ shortcut $C_0$ by skipping already visited vertices\;
+	\Return $C$\;
+\end{algorithm}
+
+\begin{theorem}
+	Algorithm~\ref{alg:MST-TSP} is a $2(1-\frac{1}{n})$-approximation for the Metric TSP.
+\end{theorem}
+\begin{proof}
+	First we observe $d(C_0) = 2d(\text{MST}) \le 2(1-\frac{1}{n})\OPT$.
+
+	Then, by skipping already visited vertices, we decrease the total distance because $d(u,v)\le d(u,x)+d(x,v)$ for all $x$.
+	This gives us $d(C) \le d(C_0) \le 2(1-\frac{1}{n})\OPT$.
+\end{proof}
+
+\subsection{Improving via Matching}
+
+Doubling all edges might be an overkill for finding an Euler tour.
+After finding the MST, we can, instead, focus on the vertices with odd degrees $V_\text{odd}$.
+
+As the total degree of all vertices is $2m$, we can see that the size of $V_\text{odd}$ is even.
+
+A simple and intuitive way to eliminate odd-degree vertices is to find a prefect matching. Here we claim without proof, that we can find the minimum perfect matching in polynomial time.
+
+\begin{algorithm}[H]
+	\caption{Better TSP Approximation} \label{alg:better-TSP}
+	Find MST $T$ of $G$\;
+	$V_\text{odd}\gets$ set of vertices that have odd degree in $T$\;
+	$M\gets$ min-cost perfect matching in graph induced by $V_\text{odd}$\;
+	$C_0 \gets(u_0, u_1, \ldots, u_{2(n-1)-1}, u_0)$ an Euler tour of $T\cup M$\;
+	$C \gets$ shortcut $C_0$ by skipping already visited vertices\;
+	\Return $C$\;
+\end{algorithm}
+
+\begin{lemma}
+	For any complete undirected graph $G' = (V',E',d)$, if $|V'|$ is even, $d(\text{MCPM})\le \frac{1}{2}d(\text{TSP})$.
+\end{lemma}
+\begin{proof}
+	For a TSP tour $C'$, we can split it into two perfect matchings $M_1$ and $M_2$ by taking every other edge. We have $d(M_1) + d(M_2) = d(C')$. Thus, at least one of them has cost at most $\frac{1}{2}d(C')$. Since MCPM is the minimum perfect matching, we have $d(\text{MCPM}) \le \frac{1}{2}d(\text{TSP})$.
+\end{proof}
+\begin{theorem}
+	Algorithm~\ref{alg:better-TSP} is a $\frac{3}{2}$-approximation for the Metric TSP.
+\end{theorem}
+\begin{proof}
+	By triangle inequality, the TSP in the graph induced by $V_\text{odd}$ has cost at most $d(\text{TSP})$. Thus, the minimum perfect matching in the graph induced by $V_\text{odd}$ has cost at most $\frac{1}{2}d(\text{TSP})$.
+	Therefore,
+	\[ d(\ALG) \le d(T) + d(M) \le (1-\frac{1}{n})d(\text{TSP}) + \frac{1}{2}d(\text{TSP}) = \frac{3}{2}d(\text{TSP}) - \frac{1}{n}d(\text{TSP}) < \frac{3}{2}d(\text{TSP}).\]
+\end{proof}
+
+\section{$k$-terminal Cut}
+
+Problem~\ref{prob:k-terminal-cut} can be seen as a generalization of the minimum cut problem, which can be solved in polynomial time. We can use the solution to the minimum cut problem to build a solution to the $k$-terminal cut problem.
+
+\begin{remark}
+	To cut a set from another set, we can add a super source and a super sink. Then we connect the super source to the first set, and the second set to the super sink with infinite capacity edges. We can find the minimum cut that separates the super source from the super sink and get the minimum cut we want.
+\end{remark}
+
+\begin{algorithm}[H]
+	\caption{Minimum Cut-based $k$-terminal Cut Approximation} \label{alg:cut-k-terminal-cut}
+	$C_i\gets$ minimum cut that separates $s_i$ from $S\setminus \{s_i\}$ for all $i$\;
+	Sort $C_i$ and corresponding $s_i$ by the cost of $C_i$, so that $C_k$ is the most expensive cut\;
+	$C \gets \bigcup_{i=1}^{k-1} C_i$\;
+	\Return $C$\;
+\end{algorithm}
+\begin{theorem}
+	Algorithm~\ref{alg:cut-k-terminal-cut} is a $2(1-\frac{1}{k})$-approximation for the $k$-terminal cut problem.
+\end{theorem}
+\begin{proof}
+	Denote $\OPT_i$ as the $s_i$-$(S\setminus \{s_i\})$ cut in the optimal solution. Note that $\sum_{i=1}^k \cost(\OPT_i) = 2\OPT$ because each edge is counted exactly twice in the optimal solution. Also, $\cost(C_i) \le \cost(\OPT_i)$ because $C_i$ is the minimum cut that separates $s_i$ from $S\setminus \{s_i\}$.
+
+	As we throw away the most expensive cut $C_k$, we have
+	\begin{align*}
+		\cost(C) & \le (1-\frac{1}{k})\sum_{i=1}^k \cost(C_i)    \\
+		         & \le (1-\frac{1}{k})\sum_{i=1}^k \cost(\OPT_i) \\
+		         & = 2(1-\frac{1}{k})\OPT.                       \\
+	\end{align*}
+\end{proof}

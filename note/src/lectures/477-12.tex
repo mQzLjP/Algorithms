@@ -32,7 +32,7 @@ We can then make use of it to design Dinitz Algorithm. The main idea is to find 
 
 Then we give an algorithm for computing blocking flows.
 
-\begin{algorithm}
+\begin{algorithm}[H]
 	\While{there is an $s$-$t$ path in $G'$}{
 		Apply DFS to find an $s$-$t$ path $p$ in $G'$\;
 		Delete edges during backtracking, as they can't connect to $t$\;

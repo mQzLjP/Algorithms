@@ -157,7 +157,7 @@ For deletemin, we
 However this structure does not support decreasekey operation efficiently. To solve this problem, we introduce the Fibonacci heap, which is a more relaxed version of the binomial heap.
 
 \begin{definition}[Fibonacci Heap]
-	A Fibonacci heap is a collection of heap-ordered trees, where there is no restriction on the number of trees of the same rank.
+	A Fibonacci heap is a collection of heap-ordered trees (not necessarily binomial), with at most one tree per rank.
 \end{definition}
 
 While the insert and deletemin operations are the same as in a binomial heap, the decreasekey operation is implemented as follows:

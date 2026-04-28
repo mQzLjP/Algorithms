@@ -44,7 +44,7 @@ We'll go back to more MST algorithms in later chapters, but now we focus on how 
 
 \section{Implementation of Union Find}
 
-The implement of Galler-Fischer Union-Find Algorithm is easy. Each element keeps a \textbf{parent pointer} and a \textbf{rank}. Consider each set $A\in \mathcal P$ is a rooted tree, where the root has a pointer to $\text{rep}(A)$. Initially, $\rank(v) = 0$ and $\text{parent}(v) = \text{NULL}$ for all $v$.
+The implementation of Galler-Fischer Union-Find Algorithm is easy. Each element keeps a \textbf{parent pointer} and a \textbf{rank}. Consider each set $A\in \mathcal P$ is a rooted tree, where the root has a pointer to $\text{rep}(A)$. Initially, $\rank(v) = 0$ and $\text{parent}(v) = \text{NULL}$ for all $v$.
 
 Then, when we take the union of two elements, we find their roots, and link the root of one tree to the root of the other tree. We follow the following Rank Rule: whenever two roots of the same rank are linked, the winner's rank is incremented. The node with smaller rank is made a child of the node of the higher rank.
 
